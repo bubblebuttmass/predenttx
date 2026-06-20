@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PreDentTX | Find Dental Shadowing & Events</title>
+    <meta name="description" content="Connecting Texas predental students with dentists offering shadowing opportunities and community events.">
+    <meta property="og:title" content="PreDentTX">
+    <meta property="og:description" content="Connecting Texas predental students with dentists offering shadowing opportunities and community events.">
+    <meta property="og:type" content="website">
     <style>
         :root {
             --primary-green: #0A5C36;
@@ -46,10 +50,7 @@
         .hero h1 { font-size: 44px; margin-bottom: 10px; }
         .hero p { font-size: 18px; margin-bottom: 30px; color: var(--primary-gold); }
 
-        /* Search Toggle Switch Styles */
-        .search-toggle {
-            display: flex; justify-content: center; gap: 15px; margin-bottom: 25px;
-        }
+        .search-toggle { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; }
         .toggle-btn {
             background: rgba(255,255,255,0.1); border: 2px solid var(--primary-gold);
             color: white; padding: 10px 25px; border-radius: 30px; font-weight: bold;
@@ -80,7 +81,7 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid var(--primary-green);
             display: flex; flex-direction: column; justify-content: space-between;
         }
-        
+
         .doctor-identity-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
         .doctor-avatar {
             width: 50px; height: 50px; border-radius: 50%; object-fit: cover;
@@ -90,8 +91,7 @@
         .doctor-meta-text h3 { margin: 0; font-size: 18px; color: var(--dark-text); }
         .clinic-specialty { color: var(--primary-green); font-weight: bold; font-size: 13px; margin-top: 2px; }
         .clinic-reqs { font-size: 14px; color: #666; margin-bottom: 15px; line-height: 1.4; min-height: 40px; }
-        
-        /* Event Specific Card Styling */
+
         .event-card { border-top-color: var(--event-purple); }
         .event-badge { background: var(--event-purple); color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-bottom: 10px; display: inline-block; }
         .event-detail { font-size: 13px; color: #555; margin: 5px 0; display: flex; align-items: flex-start; gap: 5px; }
@@ -118,7 +118,7 @@
     <div class="hero">
         <h1>Find Your Next Experience</h1>
         <p>Connecting Texas Predental Students with Top Clinics & Community Events.</p>
-        
+
         <div class="search-toggle">
             <button class="toggle-btn active" id="toggle-clinics">Find Clinics</button>
             <button class="toggle-btn" id="toggle-events">Find Events</button>
@@ -138,23 +138,9 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-        import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBJbOnqR5OUm3NiUqTRkpKndg6wI2BJWyg",
-            authDomain: "predenttx-a18a0.firebaseapp.com",
-            projectId: "predenttx-a18a0",
-            storageBucket: "predenttx-a18a0.firebasestorage.app",
-            messagingSenderId: "858713059242",
-            appId: "1:858713059242:web:c3ef0473986c727e5205d3",
-            measurementId: "G-5HKM855YXP"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        import { auth, db } from './firebase-config.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+        import { collection, query, where, orderBy, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
         const searchInput = document.getElementById("search-city");
         const searchBtn = document.getElementById("search-btn");
@@ -163,10 +149,9 @@
         const loginBtn = document.getElementById("nav-login-btn");
         const navProfileIcon = document.getElementById("nav-profile-icon");
 
-        // Toggle State Engine
         const toggleClinicsBtn = document.getElementById("toggle-clinics");
         const toggleEventsBtn = document.getElementById("toggle-events");
-        let activeSearchMode = "clinics"; // can be 'clinics' or 'events'
+        let activeSearchMode = "clinics";
 
         toggleClinicsBtn.addEventListener("click", () => {
             activeSearchMode = "clinics";
@@ -187,19 +172,19 @@
                 loginBtn.style.display = "none";
                 navProfileIcon.style.display = "block";
                 const userDoc = await getDoc(doc(db, "users", user.uid));
-                let userRole = "student"; 
+                let userRole = "student";
                 if (userDoc.exists()) {
                     userRole = userDoc.data().role;
                     if (userDoc.data().profilePic) {
                         navProfileIcon.style.backgroundImage = `url('${userDoc.data().profilePic}')`;
                     }
                 }
-                navProfileIcon.addEventListener("click", () => {
-                    if (userRole === "student") window.location.href = "student-profile.html";
-                    else window.location.href = "dentist-dashboard.html";
-                });
+                navProfileIcon.onclick = () => {
+                    window.location.href = userRole === "student" ? "student-profile.html" : "dentist-dashboard.html";
+                };
             } else {
-                loginBtn.style.display = "block"; navProfileIcon.style.display = "none";
+                loginBtn.style.display = "block";
+                navProfileIcon.style.display = "none";
             }
         });
 
@@ -210,80 +195,105 @@
             resultsContainer.innerHTML = "<p>Searching PreDentTX database...</p>";
             resultsTitle.innerText = `Results for "${searchInput.value}"`;
 
+            // Firestore can't do real substring search, but a range query on a
+            // sorted field gives us "starts with" matching — a real improvement
+            // over the old exact-match-only query, which failed on anything
+            // that wasn't a perfect lowercase match (e.g. "Austin, TX" or a typo).
+            const prefixEnd = cityQuery + '\uf8ff';
+
             try {
                 if (activeSearchMode === "clinics") {
-                    // --- CLINIC SEARCH ROUTING ---
-                    const q = query(collection(db, "dentist_profiles"), where("city", "==", cityQuery));
+                    const q = query(
+                        collection(db, "dentist_profiles"),
+                        where("city", ">=", cityQuery),
+                        where("city", "<=", prefixEnd)
+                    );
                     const querySnapshot = await getDocs(q);
-                    resultsContainer.innerHTML = ""; 
+                    resultsContainer.innerHTML = "";
 
                     if (querySnapshot.empty) {
                         resultsContainer.innerHTML = "<p>No clinics found in this city yet.</p>";
                         return;
                     }
 
-                    querySnapshot.forEach((doc) => {
-                        const clinic = doc.data();
+                    querySnapshot.forEach((docSnap) => {
+                        const clinic = docSnap.data();
                         const card = document.createElement("div");
                         card.className = "clinic-card";
-                        
+
                         const clinicImage = clinic.clinicImage || "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=400";
-                        const avatarImage = clinic.doctorProfilePic || "https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=dentist";
+                        const avatarImage = clinic.doctorProfilePic || `https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=${docSnap.id}`;
 
                         card.innerHTML = `
                             <div style="background-image: url('${clinicImage}'); background-size: cover; background-position: center; height: 150px; border-radius: 6px; margin-bottom: 15px;"></div>
                             <div class="doctor-identity-row">
                                 <img class="doctor-avatar" src="${avatarImage}" alt="Doctor Profile">
                                 <div class="doctor-meta-text">
-                                    <h3>${clinic.clinicName}</h3>
-                                    <span class="clinic-specialty">${clinic.doctorName} | ${clinic.specialty}</span>
+                                    <h3>${clinic.clinicName || ""}</h3>
+                                    <span class="clinic-specialty">${clinic.doctorName || ""} | ${clinic.specialty || ""}</span>
                                 </div>
                             </div>
-                            <p class="clinic-reqs"><strong>Requirements:</strong> ${clinic.requirements}</p>
-                            <a href="dentist-profile.html?id=${doc.id}" class="btn-view-profile">View Shadowing Schedule</a>
+                            <p class="clinic-reqs"><strong>Requirements:</strong> ${clinic.requirements || "Contact clinic for details."}</p>
+                            <a href="dentist-profile.html?id=${docSnap.id}" class="btn-view-profile">View Shadowing Schedule</a>
                         `;
                         resultsContainer.appendChild(card);
                     });
 
-                } else if (activeSearchMode === "events") {
-                    // --- EVENT SEARCH ROUTING ---
-                    const q = query(collection(db, "events"), where("city", "==", cityQuery));
+                } else {
+                    const q = query(
+                        collection(db, "events"),
+                        where("city", ">=", cityQuery),
+                        where("city", "<=", prefixEnd),
+                        orderBy("city"),
+                        orderBy("eventDate", "asc")
+                    );
                     const querySnapshot = await getDocs(q);
-                    resultsContainer.innerHTML = ""; 
+                    resultsContainer.innerHTML = "";
 
-                    if (querySnapshot.empty) {
+                    const now = new Date();
+                    const upcoming = querySnapshot.docs.filter(d => {
+                        const ev = d.data();
+                        return ev.eventDate && ev.eventDate.toDate() >= now;
+                    });
+
+                    if (upcoming.length === 0) {
                         resultsContainer.innerHTML = "<p>No upcoming events posted in this city yet.</p>";
                         return;
                     }
 
-                    querySnapshot.forEach((doc) => {
-                        const eventData = doc.data();
+                    upcoming.forEach((docSnap) => {
+                        const eventData = docSnap.data();
                         const card = document.createElement("div");
                         card.className = "clinic-card event-card";
-                        
+
                         const eventImage = eventData.eventImage || "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80&w=400";
+                        const formattedDate = eventData.eventDate.toDate().toLocaleString('en-US', {
+                            weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+                        });
 
                         card.innerHTML = `
                             <div style="background-image: url('${eventImage}'); background-size: cover; background-position: center; height: 150px; border-radius: 6px; margin-bottom: 10px;"></div>
                             <div>
                                 <span class="event-badge">Community Event</span>
                                 <h3 style="margin-bottom: 5px; color: var(--primary-green);">${eventData.title}</h3>
-                                <p style="font-size: 13px; color: #888; margin: 0 0 10px 0;">Hosted by: <strong>${eventData.hostName}</strong></p>
-                                
-                                <p class="event-detail">📅 <strong>Date/Time:</strong> ${eventData.dateTime}</p>
-                                <p class="event-detail">📍 <strong>Location:</strong> ${eventData.location}</p>
-                                <p style="font-size: 14px; color: #444; margin-top: 10px; line-height: 1.4;">${eventData.description}</p>
-                                
+                                <p style="font-size: 13px; color: #888; margin: 0 0 10px 0;">Hosted by: <strong>${eventData.hostName || ""}</strong></p>
+
+                                <p class="event-detail">📅 <strong>Date/Time:</strong> ${formattedDate}</p>
+                                <p class="event-detail">📍 <strong>Location:</strong> ${eventData.location || ""}</p>
+                                <p style="font-size: 14px; color: #444; margin-top: 10px; line-height: 1.4;">${eventData.description || ""}</p>
+
                                 <div class="event-contact-box">
                                     <strong>Contact for info/RSVP:</strong><br>
-                                    ${eventData.contactInfo}
+                                    ${eventData.contactInfo || ""}
                                 </div>
                             </div>
                         `;
                         resultsContainer.appendChild(card);
                     });
                 }
-            } catch (error) { resultsContainer.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`; }
+            } catch (error) {
+                resultsContainer.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+            }
         });
     </script>
 </body>

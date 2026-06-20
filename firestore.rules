@@ -1,0 +1,96 @@
+rules_version = '2';
+
+// Deploy with: firebase deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function myRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    // ----------------------------------------------------
+    // users — one doc per signed-up account
+    // ----------------------------------------------------
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if false;
+    }
+
+    // ----------------------------------------------------
+    // dentist_profiles — public clinic directory listing
+    // ----------------------------------------------------
+    match /dentist_profiles/{dentistId} {
+      allow read: if true; // browsable by logged-out visitors on index.html
+      allow create: if isOwner(dentistId) && myRole() == 'dentist';
+      allow update: if isOwner(dentistId);
+      allow delete: if false;
+    }
+
+    // ----------------------------------------------------
+    // shadowing_requests — booking flow
+    // studentId/dentistId are real auth uids now (not a typed email), so a
+    // request can only ever be created by, and attributed to, whoever is
+    // actually logged in.
+    // ----------------------------------------------------
+    match /shadowing_requests/{requestId} {
+      allow read: if isSignedIn() &&
+        (resource.data.studentId == request.auth.uid || resource.data.dentistId == request.auth.uid);
+
+      allow create: if isSignedIn() &&
+        request.resource.data.studentId == request.auth.uid &&
+        request.resource.data.requestStatus == 'pending';
+
+      // Only the targeted dentist can update a request, and only to change
+      // its status/message — not who it belongs to.
+      allow update: if isSignedIn() &&
+        resource.data.dentistId == request.auth.uid &&
+        request.resource.data.studentId == resource.data.studentId &&
+        request.resource.data.dentistId == resource.data.dentistId &&
+        request.resource.data.requestStatus in ['accepted', 'declined'];
+
+      allow delete: if false;
+    }
+
+    // ----------------------------------------------------
+    // events — public community events
+    // ----------------------------------------------------
+    match /events/{eventId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.hostId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.hostId == request.auth.uid;
+    }
+
+    // ----------------------------------------------------
+    // shadowing_logs — verified hours
+    // dentistId is now a required field. The old schema had no dentist link
+    // at all, so the dentist dashboard pulled every clinic's pending logs —
+    // this rule makes that structurally impossible going forward.
+    // ----------------------------------------------------
+    match /shadowing_logs/{logId} {
+      allow read: if isSignedIn() &&
+        (resource.data.studentId == request.auth.uid || resource.data.dentistId == request.auth.uid);
+
+      allow create: if isSignedIn() &&
+        request.resource.data.studentId == request.auth.uid &&
+        request.resource.data.status == 'pending';
+
+      allow update: if isSignedIn() &&
+        resource.data.dentistId == request.auth.uid &&
+        request.resource.data.studentId == resource.data.studentId &&
+        request.resource.data.dentistId == resource.data.dentistId &&
+        request.resource.data.status in ['approved', 'denied'];
+
+      allow delete: if false;
+    }
+  }
+}

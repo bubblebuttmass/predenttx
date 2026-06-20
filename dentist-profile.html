@@ -48,7 +48,7 @@
 
         h1 { color: var(--primary-green); margin-top: 0; margin-bottom: 5px; }
         .clinic-sub { font-size: 18px; color: var(--primary-gold); font-weight: bold; margin-bottom: 25px; }
-        
+
         .info-section {
             margin-bottom: 25px;
             border-bottom: 1px solid #eee;
@@ -58,7 +58,6 @@
         .info-section h3 { margin: 0 0 10px 0; color: #555; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; }
         .info-section p { margin: 0; font-size: 16px; line-height: 1.6; }
 
-        /* Request Form Styling */
         .request-form {
             background-color: #fcfcfc;
             border: 1px dashed #ccc;
@@ -68,7 +67,7 @@
         }
         .request-form h2 { color: var(--primary-green); margin-top: 0; font-size: 20px; }
 
-        input[type="date"], textarea, input[type="email"] {
+        input[type="date"], textarea {
             width: 100%;
             padding: 12px;
             margin-bottom: 15px;
@@ -94,7 +93,20 @@
             cursor: pointer;
         }
         .btn-apply:hover { background-color: #074226; }
+        .btn-apply:disabled { background-color: #aaa; cursor: not-allowed; }
         #submit-status { font-weight: bold; margin-top: 10px; color: var(--primary-green); }
+
+        .logged-in-as {
+            font-size: 13px; color: #666; margin-bottom: 15px; background: #eee;
+            padding: 8px 12px; border-radius: 5px;
+        }
+        .login-prompt {
+            text-align: center; padding: 20px; color: #555;
+        }
+        .login-prompt a {
+            color: var(--primary-green); font-weight: bold; text-decoration: none;
+        }
+        .login-prompt a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -124,45 +136,38 @@
                 <p id="display-requirements">Loading guidelines...</p>
             </div>
 
-            <div class="request-form">
+            <div class="request-form" id="request-form-logged-in" style="display:none;">
                 <h2>Request a Shadowing Date</h2>
-                
-                <label style="font-weight: bold; display: block; margin-bottom: 5px;">Your Email Address:</label>
-                <input type="email" id="student-email" placeholder="Enter your university email">
+                <p class="logged-in-as" id="logged-in-as-text"></p>
 
                 <label style="font-weight: bold; display: block; margin-bottom: 5px;">Preferred Date:</label>
                 <input type="date" id="requested-date">
 
                 <label style="font-weight: bold; display: block; margin-bottom: 5px;">Message / Introduction:</label>
                 <textarea id="student-message" rows="3" placeholder="Introduce yourself! (e.g., 'Hi, I am a junior predental student at UT Austin looking to observe root canals...')"></textarea>
-                
+
                 <button class="btn-apply" id="apply-btn">Submit Booking Request</button>
                 <p id="submit-status"></p>
+            </div>
+
+            <div class="request-form login-prompt" id="request-form-logged-out" style="display:none;">
+                <h2 style="color: var(--primary-green);">Want to request a shadowing date?</h2>
+                <p>Log in or create a free student account to send a request directly to this clinic.</p>
+                <a href="login.html">Log In / Sign Up &rarr;</a>
             </div>
         </div>
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-        // Added addDoc to create the booking request
-        import { getFirestore, doc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
-
-        // *** YOUR REAL PREDENTTX KEYS ***
-        const firebaseConfig = {
-            apiKey: "AIzaSyBJbOnqR5OUm3NiUqTRkpKndg6wI2BJWyg",
-            authDomain: "predenttx-a18a0.firebaseapp.com",
-            projectId: "predenttx-a18a0",
-            storageBucket: "predenttx-a18a0.firebasestorage.app",
-            messagingSenderId: "858713059242",
-            appId: "1:858713059242:web:c3ef0473986c727e5205d3",
-            measurementId: "G-5HKM855YXP"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        import { auth, db, notify } from './firebase-config.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+        import { doc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
         const urlParams = new URLSearchParams(window.location.search);
-        const dentistId = urlParams.get('id'); // This is the unique UID of the dentist!
+        const dentistId = urlParams.get('id');
+
+        let currentUser = null;
+        let dentistData = null;
 
         async function loadProfile() {
             if (!dentistId) {
@@ -175,55 +180,88 @@
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    document.getElementById("display-doctor-name").innerText = data.doctorName || "Dentist Profile";
-                    document.getElementById("display-clinic-name").innerText = data.clinicName || "";
-                    document.getElementById("display-specialty").innerText = data.specialty || "General Dentistry";
-                    document.getElementById("display-city").innerText = data.city ? data.city.toUpperCase() : "Texas";
-                    document.getElementById("display-requirements").innerText = data.requirements || "No specific requirements listed.";
+                    dentistData = docSnap.data();
+                    document.getElementById("display-doctor-name").innerText = dentistData.doctorName || "Dentist Profile";
+                    document.getElementById("display-clinic-name").innerText = dentistData.clinicName || "";
+                    document.getElementById("display-specialty").innerText = dentistData.specialty || "General Dentistry";
+                    document.getElementById("display-city").innerText = dentistData.city ? dentistData.city.toUpperCase() : "Texas";
+                    document.getElementById("display-requirements").innerText = dentistData.requirements || "No specific requirements listed.";
                 }
             } catch (error) {
                 console.error(error);
             }
         }
 
-        // NEW: Submit the Booking Request to Firestore
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            if (user) {
+                document.getElementById("request-form-logged-in").style.display = "block";
+                document.getElementById("request-form-logged-out").style.display = "none";
+                document.getElementById("logged-in-as-text").innerText = `Requesting as: ${user.email}`;
+            } else {
+                document.getElementById("request-form-logged-in").style.display = "none";
+                document.getElementById("request-form-logged-out").style.display = "block";
+            }
+        });
+
         document.getElementById("apply-btn").addEventListener("click", async () => {
+            const applyBtn = document.getElementById("apply-btn");
             const statusText = document.getElementById("submit-status");
-            const email = document.getElementById("student-email").value;
             const date = document.getElementById("requested-date").value;
             const message = document.getElementById("student-message").value;
 
-            if (email === "" || date === "") {
-                statusText.innerText = "Please provide both your email and a preferred date.";
+            if (!currentUser) {
+                statusText.innerText = "Please log in first.";
+                statusText.style.color = "red";
+                return;
+            }
+            if (date === "") {
+                statusText.innerText = "Please choose a preferred date.";
                 statusText.style.color = "red";
                 return;
             }
 
+            applyBtn.disabled = true;
             statusText.innerText = "Sending request to clinic...";
             statusText.style.color = "var(--primary-green)";
 
+            // studentId comes from the authenticated session, not a typed field —
+            // this is what makes it impossible to submit a request as someone else.
             const requestData = {
-                dentistId: dentistId, // Links it directly to this specific dentist doc
-                studentEmail: email,
+                dentistId: dentistId,
+                studentId: currentUser.uid,
+                studentEmail: currentUser.email,
                 requestedDate: date,
                 studentMessage: message,
-                requestStatus: "pending", // Pending dentist approval
+                requestStatus: "pending",
                 timestamp: new Date().toISOString()
             };
 
             try {
-                // Save it inside a collection called "shadowing_requests"
                 await addDoc(collection(db, "shadowing_requests"), requestData);
                 statusText.innerText = "Success! Your shadowing request has been submitted to the dentist.";
-                
-                // Clear fields
-                document.getElementById("student-email").value = "";
+
                 document.getElementById("requested-date").value = "";
                 document.getElementById("student-message").value = "";
+
+                if (dentistData) {
+                    const dentistDoc = await getDoc(doc(db, "users", dentistId));
+                    const dentistEmail = dentistDoc.exists() ? dentistDoc.data().email : null;
+                    if (dentistEmail) {
+                        notify({
+                            to: dentistEmail,
+                            subject: `New shadowing request — ${date}`,
+                            html: `<p><strong>${currentUser.email}</strong> requested to shadow on <strong>${date}</strong>.</p>
+                                   <p>Message: ${message || "(none)"}</p>
+                                   <p>Log in to PreDentTX to accept or decline.</p>`
+                        });
+                    }
+                }
             } catch (error) {
                 statusText.innerText = "Error sending request: " + error.message;
                 statusText.style.color = "red";
+            } finally {
+                applyBtn.disabled = false;
             }
         });
 

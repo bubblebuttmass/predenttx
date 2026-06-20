@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PreDentTX | Login</title>
     <style>
-        /* PreDentTX Green and Gold Theme */
         :root {
             --primary-green: #0A5C36;
             --primary-gold: #D4AF37;
@@ -35,7 +34,7 @@
             border-top: 8px solid var(--primary-green);
         }
 
-        .login-box h1 { color: var(--primary-gold); margin-bottom: 5px; }
+        .login-box h1 { color: var(--primary-green); margin-bottom: 5px; }
         .login-box p { color: #666; margin-bottom: 30px; }
 
         input, select {
@@ -63,9 +62,19 @@
         }
 
         button:hover { background-color: #074226; }
+        button:disabled { background-color: #aaa; cursor: not-allowed; }
         .btn-secondary { background-color: var(--primary-gold); color: var(--dark-text); }
         .btn-secondary:hover { background-color: #b5952f; }
-        #error-message { color: red; font-size: 14px; margin-top: 10px; }
+
+        .forgot-link {
+            display: inline-block; margin-top: 5px; font-size: 13px;
+            color: var(--primary-green); text-decoration: none; cursor: pointer;
+        }
+        .forgot-link:hover { text-decoration: underline; }
+
+        #status-message { font-size: 14px; margin-top: 15px; min-height: 18px; }
+        #status-message.error { color: #c0392b; }
+        #status-message.success { color: var(--primary-green); }
     </style>
 </head>
 <body>
@@ -79,101 +88,118 @@
             <option value="dentist">I am a Dentist / Orthodontist</option>
         </select>
 
-        <input type="email" id="email" placeholder="Email Address">
-        <input type="password" id="password" placeholder="Password">
-        
+        <input type="email" id="email" placeholder="Email Address" autocomplete="email">
+        <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+
         <button id="login-btn">Log In</button>
         <button id="signup-btn" class="btn-secondary">Create Account</button>
-        
-        <p id="error-message"></p>
+
+        <a class="forgot-link" id="forgot-link">Forgot your password?</a>
+
+        <p id="status-message"></p>
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-        // Import Firestore tools to save and read user roles
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
-
-        // *** PASTE YOUR SPECIFIC FIREBASE KEYS HERE ***
-       // *** Your actual PreDentTX Keys ***
-        const firebaseConfig = {
-            apiKey: "AIzaSyBJbOnqR5OUm3NiUqTRkpKndg6wI2BJWyg",
-            authDomain: "predenttx-a18a0.firebaseapp.com",
-            projectId: "predenttx-a18a0",
-            storageBucket: "predenttx-a18a0.firebasestorage.app",
-            messagingSenderId: "858713059242",
-            appId: "1:858713059242:web:c3ef0473986c727e5205d3",
-            measurementId: "G-5HKM855YXP"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        import { auth, db } from './firebase-config.js';
+        import {
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            sendEmailVerification,
+            sendPasswordResetEmail
+        } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+        import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
         const roleInput = document.getElementById("user-role");
         const emailInput = document.getElementById("email");
         const passwordInput = document.getElementById("password");
-        const errorMessage = document.getElementById("error-message");
+        const statusMessage = document.getElementById("status-message");
+        const loginBtn = document.getElementById("login-btn");
+        const signupBtn = document.getElementById("signup-btn");
 
-        // Feature 1: Create Account & Save Role
-        document.getElementById("signup-btn").addEventListener("click", async () => {
-            const email = emailInput.value;
+        function setStatus(text, type) {
+            statusMessage.innerText = text;
+            statusMessage.className = type || "";
+        }
+        function setBusy(busy) {
+            loginBtn.disabled = busy;
+            signupBtn.disabled = busy;
+        }
+
+        async function routeToDashboard(uid) {
+            const userDoc = await getDoc(doc(db, "users", uid));
+            const role = userDoc.exists() ? userDoc.data().role : "student";
+            window.location.href = role === "dentist" ? "dentist-dashboard.html" : "student-profile.html";
+        }
+
+        signupBtn.addEventListener("click", async () => {
+            const email = emailInput.value.trim();
             const password = passwordInput.value;
             const role = roleInput.value;
 
-            if (email === "" || password === "") {
-                errorMessage.innerText = "Please fill in all fields.";
-                return;
-            }
+            if (!email || !password) { setStatus("Please fill in all fields.", "error"); return; }
+            if (password.length < 6) { setStatus("Password must be at least 6 characters.", "error"); return; }
+
+            setBusy(true);
+            setStatus("Creating account...", "");
 
             try {
-                // 1. Create the Auth account
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
 
-                // 2. Save their specific role in the database under a "users" folder
-                await setDoc(doc(db, "users", user.uid), {
-                    email: email,
-                    role: role
-                });
+                await setDoc(doc(db, "users", user.uid), { email, role });
+                await sendEmailVerification(user);
 
-                // 3. Send them to the right page
-                if (role === "student") {
-                    window.location.href = "student-profile.html";
-                } else {
-                    window.location.href = "dentist-dashboard.html";
-                }
+                setStatus("Account created! Check your email to confirm your address, then log in below.", "success");
+                emailInput.value = "";
+                passwordInput.value = "";
             } catch (error) {
-                errorMessage.innerText = error.message;
+                setStatus(error.message, "error");
+            } finally {
+                setBusy(false);
             }
         });
 
-        // Feature 2: Log In & Check Role
-        document.getElementById("login-btn").addEventListener("click", async () => {
-            const email = emailInput.value;
+        loginBtn.addEventListener("click", async () => {
+            const email = emailInput.value.trim();
             const password = passwordInput.value;
 
+            if (!email || !password) { setStatus("Please fill in all fields.", "error"); return; }
+
+            setBusy(true);
+            setStatus("Logging in...", "");
+
             try {
-                // 1. Log them in
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
 
-                // 2. Look up their role in the database
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                
-                if (userDoc.exists()) {
-                    const role = userDoc.data().role;
-                    // 3. Redirect based on role
-                    if (role === "student") {
-                        window.location.href = "student-profile.html";
-                    } else {
-                        window.location.href = "dentist-dashboard.html";
-                    }
-                } else {
-                    errorMessage.innerText = "User role not found in database.";
+                if (!user.emailVerified) {
+                    setStatus("Please verify your email before logging in — check your inbox, or click below to resend.", "error");
+                    setBusy(false);
+                    return;
                 }
+
+                await routeToDashboard(user.uid);
             } catch (error) {
-                errorMessage.innerText = "Wrong email or password.";
+                setStatus("Wrong email or password.", "error");
+                setBusy(false);
+            }
+        });
+
+        document.getElementById("forgot-link").addEventListener("click", async () => {
+            const email = emailInput.value.trim();
+            if (!email) {
+                setStatus("Type your email above first, then click 'Forgot your password?'", "error");
+                return;
+            }
+            setStatus("Sending reset link...", "");
+            try {
+                await sendPasswordResetEmail(auth, email, {
+                    url: window.location.origin + "/reset-password.html",
+                    handleCodeInApp: true
+                });
+                setStatus("Check your email for a password reset link.", "success");
+            } catch (error) {
+                setStatus(error.message, "error");
             }
         });
     </script>

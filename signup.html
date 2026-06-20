@@ -2,126 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PreDentTX | Create Account</title>
-    <style>
-        /* PreDentTX Green and Gold Theme */
-        :root {
-            --primary-green: #0A5C36;
-            --primary-gold: #D4AF37;
-            --off-white: #F8F9FA;
-            --dark-text: #333333;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            background-color: var(--off-white);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .login-box {
-            background-color: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            text-align: center;
-            width: 350px;
-            border-top: 6px solid var(--primary-green);
-        }
-
-        .login-box h1 {
-            color: var(--primary-green);
-            margin-bottom: 5px;
-        }
-
-        .login-box p {
-            color: #666;
-            margin-bottom: 30px;
-        }
-
-        input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box; /* Keeps padding inside the width */
-        }
-
-        button {
-            width: 100%;
-            background-color: var(--primary-gold);
-            color: var(--dark-text);
-            border: none;
-            padding: 15px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        button:hover {
-            background-color: #b5952f;
-        }
-    </style>
+    <meta http-equiv="refresh" content="0; url=login.html">
+    <title>PreDentTX | Redirecting...</title>
+    <!--
+      This page used to be a separate, simpler signup form that talked
+      directly to Firebase Auth with no role selection and no email
+      verification. That flow now lives inside login.html (the "Create
+      Account" button there does the same job, plus role selection and
+      verification email). Keeping this file as a redirect rather than
+      deleting it outright, in case it's bookmarked or linked anywhere.
+    -->
 </head>
 <body>
-
-    <div class="login-box">
-        <h1>PreDentTX</h1>
-        <p>Create your student account</p>
-
-        <input type="email" id="email-input" placeholder="University Email" required>
-        <input type="password" id="password-input" placeholder="Password (min 6 characters)" required>
-        
-        <button id="signup-btn">Sign Up</button>
-    </div>
-
-    <script type="module">
-        // 1. Import tools from Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-
-        // 2. PASTE YOUR CONFIG KEYS HERE
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
-
-        // 3. Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-
-        // 4. The Sign-Up Function
-        const signupButton = document.getElementById("signup-btn");
-
-        signupButton.addEventListener("click", () => {
-            // Get what the user typed in the boxes
-            const email = document.getElementById("email-input").value;
-            const password = document.getElementById("password-input").value;
-
-            // Tell Firebase to create the user
-            createUserWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-                    // It worked!
-                    alert("Account created successfully!");
-                    // Send them to their new dashboard
-                    window.location.href = "student-profile.html"; 
-                })
-                .catch((error) => {
-                    // It failed (e.g., password too short, email taken)
-                    alert("Error: " + error.message);
-                });
-        });
-    </script>
+    <p>Redirecting to <a href="login.html">login.html</a>...</p>
 </body>
 </html>

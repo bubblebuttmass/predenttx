@@ -45,7 +45,7 @@
         .card-section h2 { margin-top: 0; color: var(--dark-text); border-bottom: 2px solid var(--off-white); padding-bottom: 10px; }
 
         input, select, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        
+
         .profile-upload-container { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; background: #fafafa; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; }
         .profile-drop-zone { width: 90px; height: 90px; border-radius: 50%; border: 2px dashed var(--primary-green); display: flex; justify-content: center; align-items: center; overflow: hidden; cursor: pointer; background: #fff; text-align: center; font-size: 11px; color: #666; padding: 5px; box-sizing: border-box; }
         .profile-drop-zone img { width: 100%; height: 100%; object-fit: cover; display: none; }
@@ -55,18 +55,18 @@
         .upload-drop-zone.dragover { background-color: #eaf2ee; border-color: var(--primary-gold); }
         .upload-preview { max-width: 100%; max-height: 180px; margin-top: 15px; border-radius: 5px; display: none; }
 
-        /* Event Drag Zone uses Purple accent */
         .event-drop-zone { border-color: var(--event-purple); }
         .event-drop-zone.dragover { border-color: var(--primary-gold); background-color: #f6eaf8; }
 
         button { padding: 12px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.2s; color: white; background-color: var(--primary-green); }
         button:hover { background-color: #074226; }
+        button:disabled { background-color: #aaa; cursor: not-allowed; }
         .btn-event { background-color: var(--event-purple); }
         .btn-event:hover { background-color: #732d91; }
 
         .request-card { border: 1px solid #eee; border-radius: 8px; padding: 20px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; background-color: #fafafa; }
         @media (max-width: 600px) { .request-card { flex-direction: column; gap: 15px; align-items: flex-start; } .action-buttons { width: 100%; } .action-buttons button { width: 100% !important; } }
-        
+
         .student-link-title { margin: 0 0 5px 0; color: var(--primary-green); cursor: pointer; text-decoration: underline; display: inline-block; }
         .student-link-title:hover { color: #074226; }
 
@@ -156,15 +156,16 @@
         <div class="card-section events">
             <h2>Post a Community Event</h2>
             <p style="font-size: 14px; color: #666; margin-top: 0;">Host an open house, seminar, or pre-dental mixer. Events bypass the scheduling system and display publicly with your contact info.</p>
-            
+
             <input type="text" id="event-title" placeholder="Event Title (e.g., Summer Pre-Dental Open House)">
-            <input type="text" id="event-datetime" placeholder="Date & Time (e.g., Saturday, Aug 15th @ 2:00 PM)">
+            <label style="font-weight: bold; display: block; margin-bottom: 5px; font-size: 13px;">Date & Time:</label>
+            <input type="datetime-local" id="event-datetime">
             <input type="text" id="event-location" placeholder="Exact Location / Address">
             <input type="text" id="event-city" placeholder="City (Important for Search Engine indexing)">
-            
+
             <textarea id="event-description" rows="3" placeholder="Describe the event parameters and what students can expect..."></textarea>
             <input type="text" id="event-contact" placeholder="Contact Email or Phone Number for RSVPs">
-            
+
             <label style="font-weight: bold; display: block; margin-bottom: 5px;">Event Poster / Image:</label>
             <div class="upload-drop-zone event-drop-zone" id="event-drop-zone">
                 <p id="event-upload-prompt" style="margin: 0; color: #555;">Drag & drop event image here, or <strong>click to browse files</strong></p>
@@ -220,27 +221,13 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, getDoc, setDoc, addDoc, query, where } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBJbOnqR5OUm3NiUqTRkpKndg6wI2BJWyg",
-            authDomain: "predenttx-a18a0.firebaseapp.com",
-            projectId: "predenttx-a18a0",
-            storageBucket: "predenttx-a18a0.firebasestorage.app",
-            messagingSenderId: "858713059242",
-            appId: "1:858713059242:web:c3ef0473986c727e5205d3",
-            measurementId: "G-5HKM855YXP"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        import { auth, db, notify, uploadMedia } from './firebase-config.js';
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+        import { collection, getDocs, doc, updateDoc, getDoc, setDoc, addDoc, query, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
         const inboxContainer = document.getElementById("inbox-container");
         const bookingsContainer = document.getElementById("bookings-container");
-        
+
         const dropZone = document.getElementById("drop-zone");
         const fileInput = document.getElementById("file-input");
         const previewImg = document.getElementById("preview-img");
@@ -251,7 +238,6 @@
         const profilePreviewImg = document.getElementById("profile-preview-img");
         const profilePrompt = document.getElementById("profile-prompt");
 
-        // Event Uploader Elements
         const eventDropZone = document.getElementById("event-drop-zone");
         const eventFileInput = document.getElementById("event-file-input");
         const eventPreviewImg = document.getElementById("event-preview-img");
@@ -272,25 +258,30 @@
         const notificationListContainer = document.getElementById("notification-list-container");
 
         let currentUserId = "";
-        let clinicImageString = ""; 
+        let clinicImageString = "";
         let profileImageString = "";
-        let eventImageString = ""; // Stores local event image conversion
+        let eventImageString = "";
         let activeTargetRequestId = "";
         let unreadNotificationCount = 0;
 
         onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                currentUserId = user.uid;
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (userDoc.exists() && userDoc.data().role === "dentist") {
-                    loadPendingLogs();
-                    loadDateRequests(user.uid);
-                    loadExistingProfile(user.uid);
-                } else {
-                    alert("Access Denied.");
-                    window.location.href = "student-profile.html";
-                }
-            } else { window.location.href = "login.html"; }
+            if (!user) { window.location.href = "login.html"; return; }
+            if (!user.emailVerified) {
+                alert("Please verify your email before accessing your dashboard.");
+                window.location.href = "login.html";
+                return;
+            }
+
+            currentUserId = user.uid;
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (userDoc.exists() && userDoc.data().role === "dentist") {
+                loadPendingLogs(user.uid);
+                loadDateRequests(user.uid);
+                loadExistingProfile(user.uid);
+            } else {
+                alert("Access Denied.");
+                window.location.href = "student-profile.html";
+            }
         });
 
         bellBtn.addEventListener("click", (e) => {
@@ -300,9 +291,7 @@
             bellBadge.style.display = "none";
         });
 
-        document.addEventListener("click", () => { 
-            bellDropdown.style.display = "none"; 
-        });
+        document.addEventListener("click", () => { bellDropdown.style.display = "none"; });
 
         bellDropdown.addEventListener("click", (e) => { e.stopPropagation(); });
         studentProfileModal.addEventListener("click", (e) => { e.stopPropagation(); });
@@ -314,25 +303,27 @@
             bellBadge.style.display = "none";
         });
 
-        window.viewStudentProfileCard = async (e, studentEmail) => {
-            if (e) e.stopPropagation(); 
+        // Now looks up the student's profile by uid directly — no need to
+        // search the users collection by email anymore.
+        window.viewStudentProfileCard = async (e, studentId) => {
+            if (e) e.stopPropagation();
             document.getElementById("modal-stud-name").innerText = "Loading profile...";
             document.getElementById("modal-stud-school").innerText = "";
             document.getElementById("modal-stud-bio").innerText = "";
-            document.getElementById("modal-stud-email").innerText = studentEmail;
+            document.getElementById("modal-stud-email").innerText = "";
             document.getElementById("modal-stud-avatar").src = "https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=placeholder";
             studentProfileModal.style.display = "flex";
 
             try {
-                const q = query(collection(db, "users"), where("email", "==", studentEmail));
-                const snap = await getDocs(q);
-                if(!snap.empty) {
-                    const studentData = snap.docs[0].data();
+                const studentDoc = await getDoc(doc(db, "users", studentId));
+                if (studentDoc.exists()) {
+                    const studentData = studentDoc.data();
                     const fullName = (studentData.firstName || studentData.lastName) ? `${studentData.firstName || ""} ${studentData.lastName || ""}` : "Pre-Dental Student";
                     document.getElementById("modal-stud-name").innerText = fullName;
                     document.getElementById("modal-stud-school").innerText = studentData.school || "Undergraduate University Unset";
                     document.getElementById("modal-stud-bio").innerText = studentData.bio || "No professional bio written yet.";
-                    document.getElementById("modal-stud-avatar").src = studentData.profilePic || `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${snap.docs[0].id}`;
+                    document.getElementById("modal-stud-email").innerText = studentData.email || "";
+                    document.getElementById("modal-stud-avatar").src = studentData.profilePic || `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${studentId}`;
                 }
             } catch (err) { console.error(err); }
         };
@@ -344,11 +335,15 @@
         profileDropZone.addEventListener("drop", (e) => { e.preventDefault(); profileDropZone.classList.remove("dragover"); if (e.dataTransfer.files.length > 0) handleAvatarSelection(e.dataTransfer.files[0]); });
         profileFileInput.addEventListener("change", (e) => { if (e.target.files.length > 0) handleAvatarSelection(e.target.files[0]); });
 
-        function handleAvatarSelection(file) {
+        async function handleAvatarSelection(file) {
             if (!file.type.startsWith("image/")) return;
-            const reader = new FileReader();
-            reader.onload = (e) => { profileImageString = e.target.result; profilePreviewImg.src = profileImageString; profilePreviewImg.style.display = "block"; profilePrompt.style.display = "none"; };
-            reader.readAsDataURL(file);
+            if (file.size > 5 * 1024 * 1024) { alert("Image must be under 5MB."); return; }
+            profilePreviewImg.src = URL.createObjectURL(file);
+            profilePreviewImg.style.display = "block";
+            profilePrompt.style.display = "none";
+            try {
+                profileImageString = await uploadMedia(currentUserId, "avatar", file);
+            } catch (err) { alert("Upload failed: " + err.message); }
         }
 
         // Clinic Image Drag Logic
@@ -358,11 +353,15 @@
         dropZone.addEventListener("drop", (e) => { e.preventDefault(); dropZone.classList.remove("dragover"); if (e.dataTransfer.files.length > 0) handleFileSelection(e.dataTransfer.files[0]); });
         fileInput.addEventListener("change", (e) => { if (e.target.files.length > 0) handleFileSelection(e.target.files[0]); });
 
-        function handleFileSelection(file) {
+        async function handleFileSelection(file) {
             if (!file.type.startsWith("image/")) return;
-            const reader = new FileReader();
-            reader.onload = (e) => { clinicImageString = e.target.result; previewImg.src = clinicImageString; previewImg.style.display = "block"; uploadPrompt.style.display = "none"; };
-            reader.readAsDataURL(file);
+            if (file.size > 5 * 1024 * 1024) { alert("Image must be under 5MB."); return; }
+            previewImg.src = URL.createObjectURL(file);
+            previewImg.style.display = "block";
+            uploadPrompt.style.display = "none";
+            try {
+                clinicImageString = await uploadMedia(currentUserId, "clinic", file);
+            } catch (err) { alert("Upload failed: " + err.message); }
         }
 
         // Event Image Drag Logic
@@ -372,11 +371,15 @@
         eventDropZone.addEventListener("drop", (e) => { e.preventDefault(); eventDropZone.classList.remove("dragover"); if (e.dataTransfer.files.length > 0) handleEventImageSelection(e.dataTransfer.files[0]); });
         eventFileInput.addEventListener("change", (e) => { if (e.target.files.length > 0) handleEventImageSelection(e.target.files[0]); });
 
-        function handleEventImageSelection(file) {
+        async function handleEventImageSelection(file) {
             if (!file.type.startsWith("image/")) return;
-            const reader = new FileReader();
-            reader.onload = (e) => { eventImageString = e.target.result; eventPreviewImg.src = eventImageString; eventPreviewImg.style.display = "block"; eventUploadPrompt.style.display = "none"; };
-            reader.readAsDataURL(file);
+            if (file.size > 5 * 1024 * 1024) { alert("Image must be under 5MB."); return; }
+            eventPreviewImg.src = URL.createObjectURL(file);
+            eventPreviewImg.style.display = "block";
+            eventUploadPrompt.style.display = "none";
+            try {
+                eventImageString = await uploadMedia(currentUserId, "event", file);
+            } catch (err) { alert("Upload failed: " + err.message); }
         }
 
         async function loadExistingProfile(uid) {
@@ -388,7 +391,7 @@
                 document.getElementById("profile-specialty").value = data.specialty || "General Dentistry";
                 document.getElementById("profile-city").value = data.city || "";
                 document.getElementById("profile-requirements").value = data.requirements || "";
-                
+
                 if (data.clinicImage) { clinicImageString = data.clinicImage; previewImg.src = clinicImageString; previewImg.style.display = "block"; uploadPrompt.style.display = "none"; }
                 if (data.doctorProfilePic) { profileImageString = data.doctorProfilePic; profilePreviewImg.src = profileImageString; profilePreviewImg.style.display = "block"; profilePrompt.style.display = "none"; }
             }
@@ -396,6 +399,8 @@
 
         document.getElementById("save-profile-btn").addEventListener("click", async () => {
             const statusMsg = document.getElementById("profile-status");
+            const saveBtn = document.getElementById("save-profile-btn");
+            saveBtn.disabled = true;
             statusMsg.innerText = "Saving profile details...";
 
             const profileData = {
@@ -412,29 +417,34 @@
                 await setDoc(doc(db, "dentist_profiles", currentUserId), profileData);
                 statusMsg.innerText = "Success! Profile changes are live.";
             } catch (error) { statusMsg.innerText = "Error: " + error.message; }
+            finally { saveBtn.disabled = false; }
         });
 
-        // NEW: Publish Event Function Logic
         document.getElementById("create-event-btn").addEventListener("click", async () => {
             const statusMsg = document.getElementById("event-status");
-            
-            // Basic validation
+            const createBtn = document.getElementById("create-event-btn");
+
             const title = document.getElementById("event-title").value.trim();
             const city = document.getElementById("event-city").value.trim().toLowerCase();
-            if (!title || !city) {
+            const datetimeValue = document.getElementById("event-datetime").value;
+
+            if (!title || !city || !datetimeValue) {
                 statusMsg.style.color = "red";
-                statusMsg.innerText = "Title and City are required to post an event.";
+                statusMsg.innerText = "Title, date/time, and city are required to post an event.";
                 return;
             }
 
+            createBtn.disabled = true;
             statusMsg.style.color = "var(--event-purple)";
             statusMsg.innerText = "Publishing event to public feed...";
 
+            // Real Timestamp now instead of a free-text string, so it can be
+            // sorted and auto-expired once it's in the past.
             const eventData = {
                 hostId: currentUserId,
                 hostName: document.getElementById("profile-clinic-name").value || document.getElementById("profile-doctor-name").value || "Local Clinic",
                 title: title,
-                dateTime: document.getElementById("event-datetime").value.trim(),
+                eventDate: Timestamp.fromDate(new Date(datetimeValue)),
                 location: document.getElementById("event-location").value.trim(),
                 city: city,
                 description: document.getElementById("event-description").value.trim(),
@@ -445,8 +455,7 @@
             try {
                 await addDoc(collection(db, "events"), eventData);
                 statusMsg.innerText = "Success! Your event is live and searchable.";
-                
-                // Clear the form for the next event
+
                 document.getElementById("event-title").value = "";
                 document.getElementById("event-datetime").value = "";
                 document.getElementById("event-location").value = "";
@@ -455,15 +464,17 @@
                 eventImageString = "";
                 eventPreviewImg.style.display = "none";
                 eventUploadPrompt.style.display = "block";
-            } catch (error) { 
+            } catch (error) {
                 statusMsg.style.color = "red";
-                statusMsg.innerText = "Error: " + error.message; 
+                statusMsg.innerText = "Error: " + error.message;
+            } finally {
+                createBtn.disabled = false;
             }
         });
 
         async function loadDateRequests(dentistUid) {
             bookingsContainer.innerHTML = "";
-            notificationListContainer.innerHTML = ""; 
+            notificationListContainer.innerHTML = "";
             unreadNotificationCount = 0;
 
             try {
@@ -479,23 +490,23 @@
                         foundRequests = true;
                         unreadNotificationCount++;
 
-                        const studQuery = query(collection(db, "users"), where("email", "==", request.studentEmail));
-                        const studSnap = await getDocs(studQuery);
+                        // Direct doc lookup by studentId — no more searching the
+                        // users collection by a typed email string.
+                        const studentDoc = await getDoc(doc(db, "users", request.studentId));
                         let displayName = request.studentEmail;
-                        
-                        if(!studSnap.empty) {
-                            const sd = studSnap.docs[0].data();
-                            if(sd.firstName) displayName = `${sd.firstName} ${sd.lastName || ""}`;
+                        if (studentDoc.exists()) {
+                            const sd = studentDoc.data();
+                            if (sd.firstName) displayName = `${sd.firstName} ${sd.lastName || ""}`;
                         }
 
                         const card = document.createElement("div");
                         card.className = "request-card";
-                        
+
                         card.innerHTML = `
                             <div class="student-info">
-                                <h3 class="student-link-title" onclick="viewStudentProfileCard(event, '${request.studentEmail}')">From: ${displayName} 🔍</h3>
+                                <h3 class="student-link-title" onclick="viewStudentProfileCard(event, '${request.studentId}')">From: ${displayName} 🔍</h3>
                                 <p class="log-details"><strong>Requested Date:</strong> ${request.requestedDate}</p>
-                                <p class="student-note">"${request.studentMessage}"</p>
+                                <p class="student-note">"${request.studentMessage || ""}"</p>
                             </div>
                             <div class="action-buttons">
                                 <button class="btn-approve" onclick="triggerAcceptFlow('${requestId}')">✓ Accept</button>
@@ -511,7 +522,7 @@
                     }
                 }
 
-                if (unreadNotificationCount > 0) { bellBadge.innerText = unreadNotificationCount; bellBadge.style.display = "block"; } 
+                if (unreadNotificationCount > 0) { bellBadge.innerText = unreadNotificationCount; bellBadge.style.display = "block"; }
                 else { bellBadge.style.display = "none"; notificationListContainer.innerHTML = '<p style="text-align: center; color: #999; font-style: italic; margin-top: 15px;">Your feed is clear.</p>'; }
                 if (!foundRequests) bookingsContainer.innerHTML = '<p class="empty-message">No upcoming requests.</p>';
             } catch (error) { console.error(error); }
@@ -531,9 +542,22 @@
 
             const reqRef = doc(db, "shadowing_requests", activeTargetRequestId);
             try {
+                const reqSnap = await getDoc(reqRef);
+                const reqData = reqSnap.data();
+
                 await updateDoc(reqRef, { requestStatus: "accepted", dentistMessage: dentistNote || "Accepted! Welcome to our clinic." });
                 alert("Reservation saved successfully!");
                 loadDateRequests(currentUserId);
+
+                if (reqData?.studentEmail) {
+                    notify({
+                        to: reqData.studentEmail,
+                        subject: `Your shadowing request was accepted!`,
+                        html: `<p>Your request for <strong>${reqData.requestedDate}</strong> was <strong>accepted</strong>.</p>
+                               <p>${dentistNote ? "Instructions: " + dentistNote : ""}</p>
+                               <p>Log in to PreDentTX for full details.</p>`
+                    });
+                }
             } catch (error) { alert("Error: " + error.message); }
         });
 
@@ -541,44 +565,68 @@
             if (!confirm("Are you sure you want to decline this request?")) return;
             const reqRef = doc(db, "shadowing_requests", requestId);
             try {
+                const reqSnap = await getDoc(reqRef);
+                const reqData = reqSnap.data();
+
                 await updateDoc(reqRef, { requestStatus: "declined" });
                 alert("Reservation declined.");
                 loadDateRequests(currentUserId);
+
+                if (reqData?.studentEmail) {
+                    notify({
+                        to: reqData.studentEmail,
+                        subject: `Update on your shadowing request`,
+                        html: `<p>Your request for <strong>${reqData.requestedDate}</strong> was declined.</p>
+                               <p>Log in to PreDentTX to find other clinics.</p>`
+                    });
+                }
             } catch (error) { alert(error.message); }
         };
 
-        async function loadPendingLogs() {
-            inboxContainer.innerHTML = ""; 
+        // Now scoped to this dentist's own uid — previously this pulled
+        // every clinic's pending logs regardless of who was logged in.
+        async function loadPendingLogs(dentistUid) {
+            inboxContainer.innerHTML = "";
             try {
-                const querySnapshot = await getDocs(collection(db, "shadowing_logs"));
+                const q = query(collection(db, "shadowing_logs"), where("dentistId", "==", dentistUid), where("status", "==", "pending"));
+                const querySnapshot = await getDocs(q);
                 let foundPending = false;
-                querySnapshot.forEach((documentSnapshot) => {
+
+                for (const documentSnapshot of querySnapshot.docs) {
                     const log = documentSnapshot.data();
                     const logId = documentSnapshot.id;
-                    if (log.status === "pending") {
-                        foundPending = true;
-                        const card = document.createElement("div");
-                        card.className = "request-card";
-                        card.innerHTML = `
-                            <div class="student-info">
-                                <h3>From Student: ${log.studentEmail}</h3>
-                                <p class="log-details"><strong>Clinic:</strong> ${log.clinic} | <strong>Hours:</strong> ${log.hours}</p>
-                            </div>
-                            <div class="action-buttons">
-                                <button class="btn-approve" onclick="updateLogStatus('${logId}', 'approved')">✓ Approve</button>
-                                <button class="btn-deny" onclick="updateLogStatus('${logId}', 'denied')">✗ Deny</button>
-                            </div>
-                        `;
-                        inboxContainer.appendChild(card);
-                    }
-                });
+                    foundPending = true;
+
+                    const studentDoc = await getDoc(doc(db, "users", log.studentId));
+                    const studentLabel = studentDoc.exists() && studentDoc.data().firstName
+                        ? `${studentDoc.data().firstName} ${studentDoc.data().lastName || ""}`
+                        : (studentDoc.exists() ? studentDoc.data().email : "Student");
+
+                    const card = document.createElement("div");
+                    card.className = "request-card";
+                    card.innerHTML = `
+                        <div class="student-info">
+                            <h3>From Student: ${studentLabel}</h3>
+                            <p class="log-details"><strong>Clinic:</strong> ${log.clinicName || ""} | <strong>Hours:</strong> ${log.hours} | <strong>Date:</strong> ${log.logDate}</p>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn-approve" onclick="updateLogStatus('${logId}', 'approved')">✓ Approve</button>
+                            <button class="btn-deny" onclick="updateLogStatus('${logId}', 'denied')">✗ Deny</button>
+                        </div>
+                    `;
+                    inboxContainer.appendChild(card);
+                }
                 if (!foundPending) inboxContainer.innerHTML = '<p class="empty-message">No pending logs.</p>';
             } catch (error) { console.error(error); }
         }
 
         window.updateLogStatus = async (logId, newStatus) => {
             const logRef = doc(db, "shadowing_logs", logId);
-            try { await updateDoc(logRef, { status: newStatus }); alert(`Log updated!`); loadPendingLogs(); } catch (error) { alert(error.message); }
+            try {
+                await updateDoc(logRef, { status: newStatus });
+                alert(`Log updated!`);
+                loadPendingLogs(currentUserId);
+            } catch (error) { alert(error.message); }
         };
 
         document.getElementById("logout-btn").addEventListener("click", () => {

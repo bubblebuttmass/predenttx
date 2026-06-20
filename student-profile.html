@@ -32,7 +32,7 @@
         }
 
         .logo { color: var(--primary-gold); font-size: 28px; font-weight: bold; text-decoration: none; }
-        
+
         .nav-links { display: flex; align-items: center; gap: 25px; }
         .nav-links a { color: white; text-decoration: none; font-weight: bold; cursor: pointer; }
 
@@ -75,7 +75,7 @@
 
         .dashboard-container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
         .welcome-banner { margin-bottom: 30px; display: flex; align-items: center; gap: 20px; }
-        
+
         .student-avatar-large {
             width: 85px; height: 85px; border-radius: 50%;
             border: 3px solid var(--primary-gold); background-color: #eee;
@@ -91,12 +91,11 @@
         }
         .card-section h2 { margin-top: 0; color: var(--dark-text); border-bottom: 2px solid var(--off-white); padding-bottom: 10px; }
 
-        input, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
-        
+        input, textarea, select { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
+
         .profile-setup-row { display: flex; gap: 15px; }
         @media (max-width: 600px) { .profile-setup-row { flex-direction: column; gap: 0; } }
 
-        /* Interactive Profile Drag and Drop Circle Selector Box */
         .avatar-picker-zone {
             width: 80px; height: 80px; border-radius: 50%;
             border: 2px dashed var(--primary-green); background: #fafafa;
@@ -110,6 +109,7 @@
 
         button { padding: 12px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.2s; color: white; background-color: var(--primary-green); }
         button:hover { background-color: #074226; }
+        button:disabled { background-color: #aaa; cursor: not-allowed; }
 
         .status-card {
             border: 1px solid #eee; border-radius: 8px; padding: 20px;
@@ -118,11 +118,13 @@
         }
         .status-row { display: flex; justify-content: space-between; align-items: center; }
         .status-row h3 { margin: 0; color: var(--dark-text); font-size: 18px; }
-        
+
         .badge { padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; text-transform: uppercase; }
         .badge.pending { background-color: #fef9e7; color: var(--pending-yellow); border: 1px solid var(--pending-yellow); }
         .badge.accepted { background-color: #eaf2ee; color: var(--primary-green); border: 1px solid var(--primary-green); }
         .badge.declined { background-color: #fceae9; color: var(--deny-red); border: 1px solid var(--deny-red); }
+        .badge.approved { background-color: #eaf2ee; color: var(--primary-green); border: 1px solid var(--primary-green); }
+        .badge.denied { background-color: #fceae9; color: var(--deny-red); border: 1px solid var(--deny-red); }
 
         .dentist-message-box {
             background-color: #fff; border-left: 4px solid var(--primary-gold);
@@ -130,6 +132,9 @@
         }
         .dentist-message-box strong { color: var(--primary-green); display: block; margin-bottom: 4px; }
         .empty-message { color: #666; font-style: italic; }
+        .log-hours-row { display: flex; gap: 15px; align-items: flex-start; }
+        @media (max-width: 600px) { .log-hours-row { flex-direction: column; } }
+        .log-hours-row > * { flex: 1; }
     </style>
 </head>
 <body>
@@ -190,26 +195,27 @@
                 <p class="empty-message">Loading submitted requests...</p>
             </div>
         </div>
+
+        <div class="card-section">
+            <h2>Log Shadowing Hours</h2>
+            <p style="font-size: 14px; color: #666; margin-top: 0;">Once a clinic accepts a request, log the hours you actually shadowed there for the dentist to verify.</p>
+            <div class="log-hours-row">
+                <select id="log-request-select">
+                    <option value="">Select an accepted clinic...</option>
+                </select>
+                <input type="date" id="log-date">
+                <input type="number" id="log-hours" placeholder="Hours" min="0.5" step="0.5">
+            </div>
+            <button id="submit-log-btn">Submit Hours for Verification</button>
+            <p id="log-status" style="color: var(--primary-green); font-weight: bold; margin-top: 10px;"></p>
+            <div id="logs-container" style="margin-top: 20px;"></div>
+        </div>
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, getDoc, setDoc, query, where } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBJbOnqR5OUm3NiUqTRkpKndg6wI2BJWyg",
-            authDomain: "predenttx-a18a0.firebaseapp.com",
-            projectId: "predenttx-a18a0",
-            storageBucket: "predenttx-a18a0.firebasestorage.app",
-            messagingSenderId: "858713059242",
-            appId: "1:858713059242:web:c3ef0473986c727e5205d3",
-            measurementId: "G-5HKM855YXP"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        import { auth, db, uploadMedia } from './firebase-config.js';
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+        import { collection, getDocs, addDoc, doc, getDoc, setDoc, query, where } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
         const applicationsContainer = document.getElementById("applications-container");
         const studentAvatar = document.getElementById("student-avatar");
@@ -226,45 +232,56 @@
         const clearFeedBtn = document.getElementById("clear-feed-btn");
         const notificationListContainer = document.getElementById("notification-list-container");
 
+        const logRequestSelect = document.getElementById("log-request-select");
+        const logsContainer = document.getElementById("logs-container");
+
+        let currentUid = "";
         let currentStudentEmail = "";
         let unreadNotificationCount = 0;
         let profilePicString = "";
+        let acceptedRequestsCache = []; // {id, dentistId, clinicName, requestedDate}
 
         onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                currentStudentEmail = user.email;
-                
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (userDoc.exists()) {
-                    const data = userDoc.data();
-                    
-                    document.getElementById("student-first-name").value = data.firstName || "";
-                    document.getElementById("student-last-name").value = data.lastName || "";
-                    document.getElementById("student-school").value = data.school || "";
-                    document.getElementById("student-bio").value = data.bio || "";
-                    
-                    if (data.firstName) {
-                        welcomeTitle.innerText = `Welcome, ${data.firstName}`;
-                    } else {
-                        welcomeTitle.innerText = `Welcome, ${user.email.split('@')[0]}`;
-                    }
+            if (!user) { window.location.href = "login.html"; return; }
+            if (!user.emailVerified) {
+                alert("Please verify your email before accessing your dashboard. Check your inbox, or sign up again to resend.");
+                window.location.href = "login.html";
+                return;
+            }
 
-                    if (data.profilePic) {
-                        profilePicString = data.profilePic;
-                        studentAvatar.style.backgroundImage = `url('${profilePicString}')`;
-                        avatarPreview.src = profilePicString;
-                        avatarPreview.style.display = "block";
-                        avatarPrompt.style.display = "none";
-                    } else {
-                        const fallbackImg = `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${user.uid}`;
-                        studentAvatar.style.backgroundImage = `url('${fallbackImg}')`;
-                    }
+            currentUid = user.uid;
+            currentStudentEmail = user.email;
+
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (userDoc.exists()) {
+                const data = userDoc.data();
+
+                document.getElementById("student-first-name").value = data.firstName || "";
+                document.getElementById("student-last-name").value = data.lastName || "";
+                document.getElementById("student-school").value = data.school || "";
+                document.getElementById("student-bio").value = data.bio || "";
+
+                if (data.firstName) {
+                    welcomeTitle.innerText = `Welcome, ${data.firstName}`;
+                } else {
+                    welcomeTitle.innerText = `Welcome, ${user.email.split('@')[0]}`;
                 }
-                loadStudentApplications(user.email);
-            } else { window.location.href = "login.html"; }
+
+                if (data.profilePic) {
+                    profilePicString = data.profilePic;
+                    studentAvatar.style.backgroundImage = `url('${profilePicString}')`;
+                    avatarPreview.src = profilePicString;
+                    avatarPreview.style.display = "block";
+                    avatarPrompt.style.display = "none";
+                } else {
+                    const fallbackImg = `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${user.uid}`;
+                    studentAvatar.style.backgroundImage = `url('${fallbackImg}')`;
+                }
+            }
+            loadStudentApplications(user.uid);
+            loadStudentLogs(user.uid);
         });
 
-        // Interactive Avatar Selection Controls
         avatarZone.addEventListener("click", () => avatarInput.click());
         avatarZone.addEventListener("dragover", (e) => { e.preventDefault(); avatarZone.classList.add("dragover"); });
         avatarZone.addEventListener("dragleave", () => avatarZone.classList.remove("dragover"));
@@ -276,23 +293,29 @@
             if (e.target.files.length > 0) handleAvatarUpload(e.target.files[0]);
         });
 
-        function handleAvatarUpload(file) {
+        async function handleAvatarUpload(file) {
             if (!file.type.startsWith("image/")) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                profilePicString = e.target.result;
-                avatarPreview.src = profilePicString;
-                avatarPreview.style.display = "block";
-                avatarPrompt.style.display = "none";
-            };
-            reader.readAsDataURL(file);
+            if (file.size > 5 * 1024 * 1024) { alert("Image must be under 5MB."); return; }
+
+            // Show an instant local preview while the real upload happens in the background.
+            const localPreviewUrl = URL.createObjectURL(file);
+            avatarPreview.src = localPreviewUrl;
+            avatarPreview.style.display = "block";
+            avatarPrompt.style.display = "none";
+
+            try {
+                profilePicString = await uploadMedia(currentUid, "avatar", file);
+            } catch (err) {
+                alert("Upload failed: " + err.message);
+            }
         }
 
-        // Save Student Information Changes
         document.getElementById("save-profile-btn").addEventListener("click", async () => {
             const status = document.getElementById("save-status");
-            status.innerText = "Saving profile variables...";
-            
+            const saveBtn = document.getElementById("save-profile-btn");
+            saveBtn.disabled = true;
+            status.innerText = "Saving profile...";
+
             const payload = {
                 firstName: document.getElementById("student-first-name").value.trim(),
                 lastName: document.getElementById("student-last-name").value.trim(),
@@ -304,11 +327,15 @@
             };
 
             try {
-                await setDoc(doc(db, "users", auth.currentUser.uid), payload, { merge: true });
+                await setDoc(doc(db, "users", currentUid), payload, { merge: true });
                 status.innerText = "Success! Profile details updated live on PreDentTX.";
-                studentAvatar.style.backgroundImage = `url('${profilePicString}')`;
-                if(payload.firstName) welcomeTitle.innerText = `Welcome, ${payload.firstName}`;
-            } catch (err) { status.innerText = "Error saving profile: " + err.message; }
+                if (profilePicString) studentAvatar.style.backgroundImage = `url('${profilePicString}')`;
+                if (payload.firstName) welcomeTitle.innerText = `Welcome, ${payload.firstName}`;
+            } catch (err) {
+                status.innerText = "Error saving profile: " + err.message;
+            } finally {
+                saveBtn.disabled = false;
+            }
         });
 
         bellBtn.addEventListener("click", (e) => {
@@ -326,13 +353,16 @@
             bellBadge.style.display = "none";
         });
 
-        async function loadStudentApplications(studentEmail) {
+        async function loadStudentApplications(uid) {
             applicationsContainer.innerHTML = "";
             notificationListContainer.innerHTML = "";
             unreadNotificationCount = 0;
+            acceptedRequestsCache = [];
+            logRequestSelect.innerHTML = '<option value="">Select an accepted clinic...</option>';
 
             try {
-                const q = query(collection(db, "shadowing_requests"), where("studentEmail", "==", studentEmail));
+                // Queried by studentId (a real uid) now, not a typed/spoofable email.
+                const q = query(collection(db, "shadowing_requests"), where("studentId", "==", uid));
                 const querySnapshot = await getDocs(q);
 
                 if (querySnapshot.empty) {
@@ -342,14 +372,14 @@
 
                 for (const documentSnapshot of querySnapshot.docs) {
                     const request = documentSnapshot.data();
-                    
+
                     const dentistDoc = await getDoc(doc(db, "dentist_profiles", request.dentistId));
                     const clinicName = dentistDoc.exists() ? dentistDoc.data().clinicName : "Dental Clinic";
                     const doctorName = dentistDoc.exists() ? dentistDoc.data().doctorName : "Dentist Specialist";
 
                     const card = document.createElement("div");
                     card.className = "status-card";
-                    
+
                     let messageSectionHTML = "";
                     if (request.requestStatus === "accepted") {
                         messageSectionHTML = `
@@ -358,6 +388,12 @@
                                 ${request.dentistMessage || "Accepted! Please log into dashboard systems to verify hour constraints."}
                             </div>
                         `;
+                        acceptedRequestsCache.push({
+                            id: documentSnapshot.id,
+                            dentistId: request.dentistId,
+                            clinicName,
+                            requestedDate: request.requestedDate
+                        });
                     }
 
                     card.innerHTML = `
@@ -376,7 +412,7 @@
                         unreadNotificationCount++;
                         const notificationItem = document.createElement("div");
                         notificationItem.className = "notification-item";
-                        
+
                         if (request.requestStatus === "accepted") {
                             notificationItem.innerHTML = `🎉 Your request for <strong>${request.requestedDate}</strong> at ${clinicName} was <strong>ACCEPTED</strong>! Check instructions.`;
                         } else {
@@ -394,8 +430,79 @@
                     notificationListContainer.innerHTML = '<p style="text-align: center; color: #999; font-style: italic; margin-top: 15px;">Your feed is clear.</p>';
                 }
 
+                acceptedRequestsCache.forEach((r) => {
+                    const opt = document.createElement("option");
+                    opt.value = r.id;
+                    opt.innerText = `${r.clinicName} — requested ${r.requestedDate}`;
+                    logRequestSelect.appendChild(opt);
+                });
+
             } catch (error) {
                 applicationsContainer.innerHTML = `<p style="color:red;">Error loading timeline data: ${error.message}</p>`;
+            }
+        }
+
+        document.getElementById("submit-log-btn").addEventListener("click", async () => {
+            const status = document.getElementById("log-status");
+            const submitBtn = document.getElementById("submit-log-btn");
+            const requestId = logRequestSelect.value;
+            const logDate = document.getElementById("log-date").value;
+            const hours = parseFloat(document.getElementById("log-hours").value);
+
+            if (!requestId) { status.style.color = "red"; status.innerText = "Pick which clinic you shadowed at."; return; }
+            if (!logDate) { status.style.color = "red"; status.innerText = "Pick the date you shadowed."; return; }
+            if (!hours || hours <= 0) { status.style.color = "red"; status.innerText = "Enter a valid number of hours."; return; }
+
+            const matchedRequest = acceptedRequestsCache.find(r => r.id === requestId);
+            if (!matchedRequest) { status.style.color = "red"; status.innerText = "Couldn't match that request, refresh and try again."; return; }
+
+            submitBtn.disabled = true;
+            status.style.color = "var(--primary-green)";
+            status.innerText = "Submitting...";
+
+            try {
+                await addDoc(collection(db, "shadowing_logs"), {
+                    studentId: currentUid,
+                    dentistId: matchedRequest.dentistId,
+                    clinicName: matchedRequest.clinicName,
+                    hours,
+                    logDate,
+                    status: "pending",
+                    timestamp: new Date().toISOString()
+                });
+                status.innerText = "Hours submitted for verification!";
+                document.getElementById("log-date").value = "";
+                document.getElementById("log-hours").value = "";
+                loadStudentLogs(currentUid);
+            } catch (err) {
+                status.style.color = "red";
+                status.innerText = "Error: " + err.message;
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+
+        async function loadStudentLogs(uid) {
+            logsContainer.innerHTML = "";
+            try {
+                const q = query(collection(db, "shadowing_logs"), where("studentId", "==", uid));
+                const snap = await getDocs(q);
+                if (snap.empty) return;
+
+                snap.forEach((d) => {
+                    const log = d.data();
+                    const row = document.createElement("div");
+                    row.className = "status-row";
+                    row.style.borderBottom = "1px solid #eee";
+                    row.style.padding = "10px 0";
+                    row.innerHTML = `
+                        <span style="font-size: 14px;">${log.clinicName || "Clinic"} — ${log.hours} hrs on ${log.logDate}</span>
+                        <span class="badge ${log.status}">${log.status}</span>
+                    `;
+                    logsContainer.appendChild(row);
+                });
+            } catch (err) {
+                console.error(err);
             }
         }
 
