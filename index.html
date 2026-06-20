@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PreDentTX | Find Dental Shadowing & Events</title>
+    <style>
+        :root {
+            --primary-green: #0A5C36;
+            --primary-gold: #D4AF37;
+            --off-white: #F8F9FA;
+            --dark-text: #333333;
+            --card-bg: #FFFFFF;
+            --event-purple: #8e44ad;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 0;
+            background-color: var(--off-white);
+            color: var(--dark-text);
+        }
+
+        header {
+            background-color: var(--primary-green);
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo { color: var(--primary-gold); font-size: 28px; font-weight: bold; text-decoration: none; }
+        .nav-links { display: flex; align-items: center; }
+        .nav-links a { color: white; text-decoration: none; margin-left: 20px; font-weight: bold; }
+
+        .profile-nav-icon {
+            width: 40px; height: 40px; background-color: #e9ecef; border-radius: 50%;
+            border: 2px solid var(--primary-gold); margin-left: 20px; cursor: pointer;
+            background-size: cover; background-position: center; display: none;
+        }
+
+        .hero {
+            background-color: var(--primary-green); color: white; padding: 60px 20px;
+            text-align: center; border-bottom: 8px solid var(--primary-gold);
+        }
+        .hero h1 { font-size: 44px; margin-bottom: 10px; }
+        .hero p { font-size: 18px; margin-bottom: 30px; color: var(--primary-gold); }
+
+        /* Search Toggle Switch Styles */
+        .search-toggle {
+            display: flex; justify-content: center; gap: 15px; margin-bottom: 25px;
+        }
+        .toggle-btn {
+            background: rgba(255,255,255,0.1); border: 2px solid var(--primary-gold);
+            color: white; padding: 10px 25px; border-radius: 30px; font-weight: bold;
+            cursor: pointer; transition: 0.3s; font-size: 16px;
+        }
+        .toggle-btn.active { background: var(--primary-gold); color: var(--dark-text); }
+
+        .search-container {
+            background-color: white; padding: 8px; border-radius: 50px;
+            display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .search-container input[type="text"] {
+            border: none; padding: 12px 20px; font-size: 16px; width: 300px; border-radius: 50px; outline: none;
+        }
+        .search-container button {
+            background-color: var(--primary-gold); color: var(--dark-text);
+            border: none; padding: 12px 25px; font-size: 16px;
+            font-weight: bold; border-radius: 50px; cursor: pointer; transition: 0.3s;
+        }
+        .search-container button:hover { background-color: #b5952f; }
+
+        .results-section { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
+        .results-section h2 { color: var(--primary-green); }
+        .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 20px; margin-top: 20px; }
+
+        .clinic-card {
+            background-color: var(--card-bg); border-radius: 8px; padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid var(--primary-green);
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+        
+        .doctor-identity-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .doctor-avatar {
+            width: 50px; height: 50px; border-radius: 50%; object-fit: cover;
+            border: 2px solid var(--primary-gold); background-color: #eee;
+        }
+        .doctor-meta-text { display: flex; flex-direction: column; }
+        .doctor-meta-text h3 { margin: 0; font-size: 18px; color: var(--dark-text); }
+        .clinic-specialty { color: var(--primary-green); font-weight: bold; font-size: 13px; margin-top: 2px; }
+        .clinic-reqs { font-size: 14px; color: #666; margin-bottom: 15px; line-height: 1.4; min-height: 40px; }
+        
+        /* Event Specific Card Styling */
+        .event-card { border-top-color: var(--event-purple); }
+        .event-badge { background: var(--event-purple); color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-bottom: 10px; display: inline-block; }
+        .event-detail { font-size: 13px; color: #555; margin: 5px 0; display: flex; align-items: flex-start; gap: 5px; }
+        .event-contact-box { background: #f9f9f9; border-left: 3px solid var(--event-purple); padding: 10px; margin-top: 15px; font-size: 13px; border-radius: 4px; }
+
+        .btn-view-profile {
+            background-color: var(--primary-gold); color: var(--dark-text);
+            text-decoration: none; text-align: center; padding: 10px;
+            border-radius: 5px; font-weight: bold; font-size: 14px; transition: 0.2s;
+        }
+        .btn-view-profile:hover { background-color: #b5952f; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="index.html" class="logo">PreDentTX</a>
+        <div class="nav-links" id="auth-links">
+            <a href="login.html" id="nav-login-btn">Sign In</a>
+        </div>
+        <div class="profile-nav-icon" id="nav-profile-icon"></div>
+    </header>
+
+    <div class="hero">
+        <h1>Find Your Next Experience</h1>
+        <p>Connecting Texas Predental Students with Top Clinics & Community Events.</p>
+        
+        <div class="search-toggle">
+            <button class="toggle-btn active" id="toggle-clinics">Find Clinics</button>
+            <button class="toggle-btn" id="toggle-events">Find Events</button>
+        </div>
+
+        <div class="search-container">
+            <input type="text" id="search-city" placeholder="What city are you looking in? (e.g., Austin)">
+            <button type="button" id="search-btn">Search</button>
+        </div>
+    </div>
+
+    <div class="results-section">
+        <h2 id="results-title">Featured Opportunities</h2>
+        <div class="results-grid" id="results-container">
+            <p style="color: #666; font-style: italic;">Select a category and type a Texas city to start your search.</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJbOnqR5OUm3NiUqTRkpKndg6wI2BJWyg",
+            authDomain: "predenttx-a18a0.firebaseapp.com",
+            projectId: "predenttx-a18a0",
+            storageBucket: "predenttx-a18a0.firebasestorage.app",
+            messagingSenderId: "858713059242",
+            appId: "1:858713059242:web:c3ef0473986c727e5205d3",
+            measurementId: "G-5HKM855YXP"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const searchInput = document.getElementById("search-city");
+        const searchBtn = document.getElementById("search-btn");
+        const resultsContainer = document.getElementById("results-container");
+        const resultsTitle = document.getElementById("results-title");
+        const loginBtn = document.getElementById("nav-login-btn");
+        const navProfileIcon = document.getElementById("nav-profile-icon");
+
+        // Toggle State Engine
+        const toggleClinicsBtn = document.getElementById("toggle-clinics");
+        const toggleEventsBtn = document.getElementById("toggle-events");
+        let activeSearchMode = "clinics"; // can be 'clinics' or 'events'
+
+        toggleClinicsBtn.addEventListener("click", () => {
+            activeSearchMode = "clinics";
+            toggleClinicsBtn.classList.add("active");
+            toggleEventsBtn.classList.remove("active");
+            searchInput.placeholder = "Search clinics by city (e.g., Austin)";
+        });
+
+        toggleEventsBtn.addEventListener("click", () => {
+            activeSearchMode = "events";
+            toggleEventsBtn.classList.add("active");
+            toggleClinicsBtn.classList.remove("active");
+            searchInput.placeholder = "Search events by city (e.g., Dallas)";
+        });
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                loginBtn.style.display = "none";
+                navProfileIcon.style.display = "block";
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                let userRole = "student"; 
+                if (userDoc.exists()) {
+                    userRole = userDoc.data().role;
+                    if (userDoc.data().profilePic) {
+                        navProfileIcon.style.backgroundImage = `url('${userDoc.data().profilePic}')`;
+                    }
+                }
+                navProfileIcon.addEventListener("click", () => {
+                    if (userRole === "student") window.location.href = "student-profile.html";
+                    else window.location.href = "dentist-dashboard.html";
+                });
+            } else {
+                loginBtn.style.display = "block"; navProfileIcon.style.display = "none";
+            }
+        });
+
+        searchBtn.addEventListener("click", async () => {
+            const cityQuery = searchInput.value.trim().toLowerCase();
+            if (cityQuery === "") { alert("Please type a city name first!"); return; }
+
+            resultsContainer.innerHTML = "<p>Searching PreDentTX database...</p>";
+            resultsTitle.innerText = `Results for "${searchInput.value}"`;
+
+            try {
+                if (activeSearchMode === "clinics") {
+                    // --- CLINIC SEARCH ROUTING ---
+                    const q = query(collection(db, "dentist_profiles"), where("city", "==", cityQuery));
+                    const querySnapshot = await getDocs(q);
+                    resultsContainer.innerHTML = ""; 
+
+                    if (querySnapshot.empty) {
+                        resultsContainer.innerHTML = "<p>No clinics found in this city yet.</p>";
+                        return;
+                    }
+
+                    querySnapshot.forEach((doc) => {
+                        const clinic = doc.data();
+                        const card = document.createElement("div");
+                        card.className = "clinic-card";
+                        
+                        const clinicImage = clinic.clinicImage || "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=400";
+                        const avatarImage = clinic.doctorProfilePic || "https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=dentist";
+
+                        card.innerHTML = `
+                            <div style="background-image: url('${clinicImage}'); background-size: cover; background-position: center; height: 150px; border-radius: 6px; margin-bottom: 15px;"></div>
+                            <div class="doctor-identity-row">
+                                <img class="doctor-avatar" src="${avatarImage}" alt="Doctor Profile">
+                                <div class="doctor-meta-text">
+                                    <h3>${clinic.clinicName}</h3>
+                                    <span class="clinic-specialty">${clinic.doctorName} | ${clinic.specialty}</span>
+                                </div>
+                            </div>
+                            <p class="clinic-reqs"><strong>Requirements:</strong> ${clinic.requirements}</p>
+                            <a href="dentist-profile.html?id=${doc.id}" class="btn-view-profile">View Shadowing Schedule</a>
+                        `;
+                        resultsContainer.appendChild(card);
+                    });
+
+                } else if (activeSearchMode === "events") {
+                    // --- EVENT SEARCH ROUTING ---
+                    const q = query(collection(db, "events"), where("city", "==", cityQuery));
+                    const querySnapshot = await getDocs(q);
+                    resultsContainer.innerHTML = ""; 
+
+                    if (querySnapshot.empty) {
+                        resultsContainer.innerHTML = "<p>No upcoming events posted in this city yet.</p>";
+                        return;
+                    }
+
+                    querySnapshot.forEach((doc) => {
+                        const eventData = doc.data();
+                        const card = document.createElement("div");
+                        card.className = "clinic-card event-card";
+                        
+                        const eventImage = eventData.eventImage || "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80&w=400";
+
+                        card.innerHTML = `
+                            <div style="background-image: url('${eventImage}'); background-size: cover; background-position: center; height: 150px; border-radius: 6px; margin-bottom: 10px;"></div>
+                            <div>
+                                <span class="event-badge">Community Event</span>
+                                <h3 style="margin-bottom: 5px; color: var(--primary-green);">${eventData.title}</h3>
+                                <p style="font-size: 13px; color: #888; margin: 0 0 10px 0;">Hosted by: <strong>${eventData.hostName}</strong></p>
+                                
+                                <p class="event-detail">📅 <strong>Date/Time:</strong> ${eventData.dateTime}</p>
+                                <p class="event-detail">📍 <strong>Location:</strong> ${eventData.location}</p>
+                                <p style="font-size: 14px; color: #444; margin-top: 10px; line-height: 1.4;">${eventData.description}</p>
+                                
+                                <div class="event-contact-box">
+                                    <strong>Contact for info/RSVP:</strong><br>
+                                    ${eventData.contactInfo}
+                                </div>
+                            </div>
+                        `;
+                        resultsContainer.appendChild(card);
+                    });
+                }
+            } catch (error) { resultsContainer.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`; }
+        });
+    </script>
+</body>
+</html>

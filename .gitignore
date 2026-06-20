@@ -1,0 +1,12 @@
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp
+
+# Local env files (used once Supabase migration lands — never commit real keys here)
+.env
+.env.local
+
+# Logs
+*.log

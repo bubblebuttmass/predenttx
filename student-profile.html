@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PreDentTX | Student Profile</title>
+    <style>
+        :root {
+            --primary-green: #0A5C36;
+            --primary-gold: #D4AF37;
+            --off-white: #F8F9FA;
+            --dark-text: #333333;
+            --card-bg: #FFFFFF;
+            --pending-yellow: #f39c12;
+            --approve-green: #2ecc71;
+            --deny-red: #e74c3c;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 0;
+            background-color: var(--off-white);
+            color: var(--dark-text);
+        }
+
+        header {
+            background-color: var(--primary-green);
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo { color: var(--primary-gold); font-size: 28px; font-weight: bold; text-decoration: none; }
+        
+        .nav-links { display: flex; align-items: center; gap: 25px; }
+        .nav-links a { color: white; text-decoration: none; font-weight: bold; cursor: pointer; }
+
+        .notification-wrapper { position: relative; display: inline-block; }
+        .notification-bell {
+            background: none; border: none; color: white;
+            font-size: 22px; cursor: pointer; position: relative;
+            padding: 5px; display: flex; align-items: center; justify-content: center;
+        }
+        .notification-badge {
+            position: absolute; top: 0; right: 0;
+            background-color: var(--deny-red); color: white;
+            font-size: 11px; font-weight: bold; border-radius: 50%;
+            padding: 2px 6px; display: none;
+        }
+        .notification-dropdown {
+            position: absolute; top: 40px; right: 0;
+            background-color: white; border: 1px solid #ddd;
+            width: 300px; border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none; z-index: 2000; padding: 15px;
+        }
+        .notification-header {
+            display: flex; justify-content: space-between;
+            align-items: center; border-bottom: 1px solid #eee;
+            padding-bottom: 8px; margin-bottom: 10px;
+        }
+        .notification-header span { font-weight: bold; color: var(--dark-text); }
+        .btn-clear-feed {
+            background-color: #7f8c8d; color: white; border: none;
+            padding: 4px 8px; font-size: 11px; border-radius: 4px;
+            cursor: pointer; font-weight: bold; transition: 0.2s;
+        }
+        .btn-clear-feed:hover { background-color: #626d6e; }
+        .notification-list { max-height: 240px; overflow-y: auto; }
+        .notification-item {
+            padding: 8px 10px; border-bottom: 1px solid #f5f5f5;
+            font-size: 13px; color: #555; line-height: 1.4;
+        }
+
+        .dashboard-container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        .welcome-banner { margin-bottom: 30px; display: flex; align-items: center; gap: 20px; }
+        
+        .student-avatar-large {
+            width: 85px; height: 85px; border-radius: 50%;
+            border: 3px solid var(--primary-gold); background-color: #eee;
+            background-size: cover; background-position: center;
+        }
+
+        .welcome-banner h1 { color: var(--primary-green); margin: 0 0 5px 0; }
+
+        .card-section {
+            background-color: var(--card-bg); padding: 30px; border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 30px;
+            border-top: 5px solid var(--primary-gold);
+        }
+        .card-section h2 { margin-top: 0; color: var(--dark-text); border-bottom: 2px solid var(--off-white); padding-bottom: 10px; }
+
+        input, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
+        
+        .profile-setup-row { display: flex; gap: 15px; }
+        @media (max-width: 600px) { .profile-setup-row { flex-direction: column; gap: 0; } }
+
+        /* Interactive Profile Drag and Drop Circle Selector Box */
+        .avatar-picker-zone {
+            width: 80px; height: 80px; border-radius: 50%;
+            border: 2px dashed var(--primary-green); background: #fafafa;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; overflow: hidden; text-align: center;
+            font-size: 10px; color: #666; padding: 5px; box-sizing: border-box;
+            flex-shrink: 0; margin-bottom: 15px;
+        }
+        .avatar-picker-zone img { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .avatar-picker-zone.dragover { background: #eaf2ee; }
+
+        button { padding: 12px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.2s; color: white; background-color: var(--primary-green); }
+        button:hover { background-color: #074226; }
+
+        .status-card {
+            border: 1px solid #eee; border-radius: 8px; padding: 20px;
+            margin-bottom: 15px; background-color: #fafafa;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .status-row { display: flex; justify-content: space-between; align-items: center; }
+        .status-row h3 { margin: 0; color: var(--dark-text); font-size: 18px; }
+        
+        .badge { padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; text-transform: uppercase; }
+        .badge.pending { background-color: #fef9e7; color: var(--pending-yellow); border: 1px solid var(--pending-yellow); }
+        .badge.accepted { background-color: #eaf2ee; color: var(--primary-green); border: 1px solid var(--primary-green); }
+        .badge.declined { background-color: #fceae9; color: var(--deny-red); border: 1px solid var(--deny-red); }
+
+        .dentist-message-box {
+            background-color: #fff; border-left: 4px solid var(--primary-gold);
+            padding: 15px; border-radius: 4px; font-size: 14px; margin-top: 5px;
+        }
+        .dentist-message-box strong { color: var(--primary-green); display: block; margin-bottom: 4px; }
+        .empty-message { color: #666; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="index.html" class="logo">PreDentTX</a>
+        <div class="nav-links">
+            <div class="notification-wrapper">
+                <button class="notification-bell" id="bell-btn">🔔<span class="notification-badge" id="bell-badge">0</span></button>
+                <div class="notification-dropdown" id="bell-dropdown">
+                    <div class="notification-header">
+                        <span>Updates Feed</span>
+                        <button class="btn-clear-feed" id="clear-feed-btn">Clear Feed</button>
+                    </div>
+                    <div class="notification-list" id="notification-list-container">
+                        <p style="text-align: center; color: #999; font-style: italic; margin-top: 15px;">Your feed is clear.</p>
+                    </div>
+                </div>
+            </div>
+            <a href="index.html">Find Clinics</a>
+            <a id="logout-btn">Logout</a>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <div class="welcome-banner">
+            <div class="student-avatar-large" id="student-avatar"></div>
+            <div>
+                <h1 id="welcome-title">Student Dashboard</h1>
+                <p style="margin: 0; color: #666;">Track your real-time clinic requests and manage your professional bio.</p>
+            </div>
+        </div>
+
+        <div class="card-section">
+            <h2>My Applicant Profile</h2>
+            <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 10px;">
+                <div class="avatar-picker-zone" id="avatar-zone">
+                    <span id="avatar-prompt">Click or drag image</span>
+                    <input type="file" id="avatar-input" accept="image/*" style="display: none;">
+                    <img id="avatar-preview" src="" alt="Avatar Preview">
+                </div>
+                <div style="flex-grow: 1;">
+                    <div class="profile-setup-row">
+                        <input type="text" id="student-first-name" placeholder="First Name">
+                        <input type="text" id="student-last-name" placeholder="Last Name">
+                    </div>
+                    <input type="text" id="student-school" placeholder="Undergraduate University (e.g., UT Austin, Texas A&M)">
+                </div>
+            </div>
+            <textarea id="student-bio" rows="3" placeholder="Write a short personal bio for dentists to review (e.g., 'Junior Pre-Dental student aiming to apply next cycle...')" style="resize:none;"></textarea>
+            <button id="save-profile-btn">Save Profile Information</button>
+            <p id="save-status" style="color: var(--primary-green); font-weight: bold; margin-top: 10px; margin-bottom: 0;"></p>
+        </div>
+
+        <div class="card-section">
+            <h2>My Shadowing Applications</h2>
+            <div id="applications-container">
+                <p class="empty-message">Loading submitted requests...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, getDoc, setDoc, query, where } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJbOnqR5OUm3NiUqTRkpKndg6wI2BJWyg",
+            authDomain: "predenttx-a18a0.firebaseapp.com",
+            projectId: "predenttx-a18a0",
+            storageBucket: "predenttx-a18a0.firebasestorage.app",
+            messagingSenderId: "858713059242",
+            appId: "1:858713059242:web:c3ef0473986c727e5205d3",
+            measurementId: "G-5HKM855YXP"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const applicationsContainer = document.getElementById("applications-container");
+        const studentAvatar = document.getElementById("student-avatar");
+        const welcomeTitle = document.getElementById("welcome-title");
+
+        const avatarZone = document.getElementById("avatar-zone");
+        const avatarInput = document.getElementById("avatar-input");
+        const avatarPreview = document.getElementById("avatar-preview");
+        const avatarPrompt = document.getElementById("avatar-prompt");
+
+        const bellBtn = document.getElementById("bell-btn");
+        const bellDropdown = document.getElementById("bell-dropdown");
+        const bellBadge = document.getElementById("bell-badge");
+        const clearFeedBtn = document.getElementById("clear-feed-btn");
+        const notificationListContainer = document.getElementById("notification-list-container");
+
+        let currentStudentEmail = "";
+        let unreadNotificationCount = 0;
+        let profilePicString = "";
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentStudentEmail = user.email;
+                
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists()) {
+                    const data = userDoc.data();
+                    
+                    document.getElementById("student-first-name").value = data.firstName || "";
+                    document.getElementById("student-last-name").value = data.lastName || "";
+                    document.getElementById("student-school").value = data.school || "";
+                    document.getElementById("student-bio").value = data.bio || "";
+                    
+                    if (data.firstName) {
+                        welcomeTitle.innerText = `Welcome, ${data.firstName}`;
+                    } else {
+                        welcomeTitle.innerText = `Welcome, ${user.email.split('@')[0]}`;
+                    }
+
+                    if (data.profilePic) {
+                        profilePicString = data.profilePic;
+                        studentAvatar.style.backgroundImage = `url('${profilePicString}')`;
+                        avatarPreview.src = profilePicString;
+                        avatarPreview.style.display = "block";
+                        avatarPrompt.style.display = "none";
+                    } else {
+                        const fallbackImg = `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${user.uid}`;
+                        studentAvatar.style.backgroundImage = `url('${fallbackImg}')`;
+                    }
+                }
+                loadStudentApplications(user.email);
+            } else { window.location.href = "login.html"; }
+        });
+
+        // Interactive Avatar Selection Controls
+        avatarZone.addEventListener("click", () => avatarInput.click());
+        avatarZone.addEventListener("dragover", (e) => { e.preventDefault(); avatarZone.classList.add("dragover"); });
+        avatarZone.addEventListener("dragleave", () => avatarZone.classList.remove("dragover"));
+        avatarZone.addEventListener("drop", (e) => {
+            e.preventDefault(); avatarZone.classList.remove("dragover");
+            if (e.dataTransfer.files.length > 0) handleAvatarUpload(e.dataTransfer.files[0]);
+        });
+        avatarInput.addEventListener("change", (e) => {
+            if (e.target.files.length > 0) handleAvatarUpload(e.target.files[0]);
+        });
+
+        function handleAvatarUpload(file) {
+            if (!file.type.startsWith("image/")) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                profilePicString = e.target.result;
+                avatarPreview.src = profilePicString;
+                avatarPreview.style.display = "block";
+                avatarPrompt.style.display = "none";
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Save Student Information Changes
+        document.getElementById("save-profile-btn").addEventListener("click", async () => {
+            const status = document.getElementById("save-status");
+            status.innerText = "Saving profile variables...";
+            
+            const payload = {
+                firstName: document.getElementById("student-first-name").value.trim(),
+                lastName: document.getElementById("student-last-name").value.trim(),
+                school: document.getElementById("student-school").value.trim(),
+                bio: document.getElementById("student-bio").value.trim(),
+                profilePic: profilePicString,
+                role: "student",
+                email: currentStudentEmail
+            };
+
+            try {
+                await setDoc(doc(db, "users", auth.currentUser.uid), payload, { merge: true });
+                status.innerText = "Success! Profile details updated live on PreDentTX.";
+                studentAvatar.style.backgroundImage = `url('${profilePicString}')`;
+                if(payload.firstName) welcomeTitle.innerText = `Welcome, ${payload.firstName}`;
+            } catch (err) { status.innerText = "Error saving profile: " + err.message; }
+        });
+
+        bellBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            bellDropdown.style.display = bellDropdown.style.display === "block" ? "none" : "block";
+            unreadNotificationCount = 0;
+            bellBadge.style.display = "none";
+        });
+        document.addEventListener("click", () => { bellDropdown.style.display = "none"; });
+        bellDropdown.addEventListener("click", (e) => { e.stopPropagation(); });
+
+        clearFeedBtn.addEventListener("click", () => {
+            notificationListContainer.innerHTML = '<p style="text-align: center; color: #999; font-style: italic; margin-top: 15px;">Your feed is clear.</p>';
+            unreadNotificationCount = 0;
+            bellBadge.style.display = "none";
+        });
+
+        async function loadStudentApplications(studentEmail) {
+            applicationsContainer.innerHTML = "";
+            notificationListContainer.innerHTML = "";
+            unreadNotificationCount = 0;
+
+            try {
+                const q = query(collection(db, "shadowing_requests"), where("studentEmail", "==", studentEmail));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    applicationsContainer.innerHTML = '<p class="empty-message">You haven\'t submitted any shadowing requests yet.</p>';
+                    return;
+                }
+
+                for (const documentSnapshot of querySnapshot.docs) {
+                    const request = documentSnapshot.data();
+                    
+                    const dentistDoc = await getDoc(doc(db, "dentist_profiles", request.dentistId));
+                    const clinicName = dentistDoc.exists() ? dentistDoc.data().clinicName : "Dental Clinic";
+                    const doctorName = dentistDoc.exists() ? dentistDoc.data().doctorName : "Dentist Specialist";
+
+                    const card = document.createElement("div");
+                    card.className = "status-card";
+                    
+                    let messageSectionHTML = "";
+                    if (request.requestStatus === "accepted") {
+                        messageSectionHTML = `
+                            <div class="dentist-message-box">
+                                <strong>Message & Instructions from ${doctorName}:</strong>
+                                ${request.dentistMessage || "Accepted! Please log into dashboard systems to verify hour constraints."}
+                            </div>
+                        `;
+                    }
+
+                    card.innerHTML = `
+                        <div class="status-row">
+                            <div>
+                                <h3>${clinicName}</h3>
+                                <span style="font-size: 14px; color: #666;">Date Requested: <strong>${request.requestedDate}</strong></span>
+                            </div>
+                            <span class="badge ${request.requestStatus}">${request.requestStatus}</span>
+                        </div>
+                        ${messageSectionHTML}
+                    `;
+                    applicationsContainer.appendChild(card);
+
+                    if (request.requestStatus !== "pending") {
+                        unreadNotificationCount++;
+                        const notificationItem = document.createElement("div");
+                        notificationItem.className = "notification-item";
+                        
+                        if (request.requestStatus === "accepted") {
+                            notificationItem.innerHTML = `🎉 Your request for <strong>${request.requestedDate}</strong> at ${clinicName} was <strong>ACCEPTED</strong>! Check instructions.`;
+                        } else {
+                            notificationItem.innerHTML = `❌ Your request for <strong>${request.requestedDate}</strong> at ${clinicName} was declined.`;
+                        }
+                        notificationListContainer.appendChild(notificationItem);
+                    }
+                }
+
+                if (unreadNotificationCount > 0) {
+                    bellBadge.innerText = unreadNotificationCount;
+                    bellBadge.style.display = "block";
+                } else {
+                    bellBadge.style.display = "none";
+                    notificationListContainer.innerHTML = '<p style="text-align: center; color: #999; font-style: italic; margin-top: 15px;">Your feed is clear.</p>';
+                }
+
+            } catch (error) {
+                applicationsContainer.innerHTML = `<p style="color:red;">Error loading timeline data: ${error.message}</p>`;
+            }
+        }
+
+        document.getElementById("logout-btn").addEventListener("click", () => {
+            signOut(auth).then(() => { window.location.href = "index.html"; });
+        });
+    </script>
+</body>
+</html>

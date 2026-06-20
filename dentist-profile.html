@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PreDentTX | Dentist Profile</title>
+    <style>
+        :root {
+            --primary-green: #0A5C36;
+            --primary-gold: #D4AF37;
+            --off-white: #F8F9FA;
+            --dark-text: #333333;
+            --card-bg: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--off-white);
+            color: var(--dark-text);
+        }
+
+        header {
+            background-color: var(--primary-green);
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo { color: var(--primary-gold); font-size: 28px; font-weight: bold; text-decoration: none; }
+        .nav-links a { color: white; text-decoration: none; font-weight: bold; }
+
+        .profile-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .profile-card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border-top: 8px solid var(--primary-green);
+        }
+
+        h1 { color: var(--primary-green); margin-top: 0; margin-bottom: 5px; }
+        .clinic-sub { font-size: 18px; color: var(--primary-gold); font-weight: bold; margin-bottom: 25px; }
+        
+        .info-section {
+            margin-bottom: 25px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+        .info-section:last-child { border-bottom: none; }
+        .info-section h3 { margin: 0 0 10px 0; color: #555; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; }
+        .info-section p { margin: 0; font-size: 16px; line-height: 1.6; }
+
+        /* Request Form Styling */
+        .request-form {
+            background-color: #fcfcfc;
+            border: 1px dashed #ccc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+        .request-form h2 { color: var(--primary-green); margin-top: 0; font-size: 20px; }
+
+        input[type="date"], textarea, input[type="email"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        .btn-apply {
+            display: inline-block;
+            background-color: var(--primary-green);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 16px;
+            transition: 0.3s;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+        .btn-apply:hover { background-color: #074226; }
+        #submit-status { font-weight: bold; margin-top: 10px; color: var(--primary-green); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="index.html" class="logo">PreDentTX</a>
+        <div class="nav-links"><a href="login.html">Portal Login</a></div>
+    </header>
+
+    <div class="profile-container">
+        <div class="profile-card">
+            <h1 id="display-doctor-name">Loading Profile...</h1>
+            <div class="clinic-sub" id="display-clinic-name">Please wait...</div>
+
+            <div class="info-section">
+                <h3>Specialty / Focus</h3>
+                <p id="display-specialty">-</p>
+            </div>
+
+            <div class="info-section">
+                <h3>Location</h3>
+                <p id="display-city">-</p>
+            </div>
+
+            <div class="info-section">
+                <h3>Shadowing Requirements</h3>
+                <p id="display-requirements">Loading guidelines...</p>
+            </div>
+
+            <div class="request-form">
+                <h2>Request a Shadowing Date</h2>
+                
+                <label style="font-weight: bold; display: block; margin-bottom: 5px;">Your Email Address:</label>
+                <input type="email" id="student-email" placeholder="Enter your university email">
+
+                <label style="font-weight: bold; display: block; margin-bottom: 5px;">Preferred Date:</label>
+                <input type="date" id="requested-date">
+
+                <label style="font-weight: bold; display: block; margin-bottom: 5px;">Message / Introduction:</label>
+                <textarea id="student-message" rows="3" placeholder="Introduce yourself! (e.g., 'Hi, I am a junior predental student at UT Austin looking to observe root canals...')"></textarea>
+                
+                <button class="btn-apply" id="apply-btn">Submit Booking Request</button>
+                <p id="submit-status"></p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+        // Added addDoc to create the booking request
+        import { getFirestore, doc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+
+        // *** YOUR REAL PREDENTTX KEYS ***
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJbOnqR5OUm3NiUqTRkpKndg6wI2BJWyg",
+            authDomain: "predenttx-a18a0.firebaseapp.com",
+            projectId: "predenttx-a18a0",
+            storageBucket: "predenttx-a18a0.firebasestorage.app",
+            messagingSenderId: "858713059242",
+            appId: "1:858713059242:web:c3ef0473986c727e5205d3",
+            measurementId: "G-5HKM855YXP"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const dentistId = urlParams.get('id'); // This is the unique UID of the dentist!
+
+        async function loadProfile() {
+            if (!dentistId) {
+                document.getElementById("display-doctor-name").innerText = "No Profile Selected";
+                return;
+            }
+
+            try {
+                const docRef = doc(db, "dentist_profiles", dentistId);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById("display-doctor-name").innerText = data.doctorName || "Dentist Profile";
+                    document.getElementById("display-clinic-name").innerText = data.clinicName || "";
+                    document.getElementById("display-specialty").innerText = data.specialty || "General Dentistry";
+                    document.getElementById("display-city").innerText = data.city ? data.city.toUpperCase() : "Texas";
+                    document.getElementById("display-requirements").innerText = data.requirements || "No specific requirements listed.";
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // NEW: Submit the Booking Request to Firestore
+        document.getElementById("apply-btn").addEventListener("click", async () => {
+            const statusText = document.getElementById("submit-status");
+            const email = document.getElementById("student-email").value;
+            const date = document.getElementById("requested-date").value;
+            const message = document.getElementById("student-message").value;
+
+            if (email === "" || date === "") {
+                statusText.innerText = "Please provide both your email and a preferred date.";
+                statusText.style.color = "red";
+                return;
+            }
+
+            statusText.innerText = "Sending request to clinic...";
+            statusText.style.color = "var(--primary-green)";
+
+            const requestData = {
+                dentistId: dentistId, // Links it directly to this specific dentist doc
+                studentEmail: email,
+                requestedDate: date,
+                studentMessage: message,
+                requestStatus: "pending", // Pending dentist approval
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                // Save it inside a collection called "shadowing_requests"
+                await addDoc(collection(db, "shadowing_requests"), requestData);
+                statusText.innerText = "Success! Your shadowing request has been submitted to the dentist.";
+                
+                // Clear fields
+                document.getElementById("student-email").value = "";
+                document.getElementById("requested-date").value = "";
+                document.getElementById("student-message").value = "";
+            } catch (error) {
+                statusText.innerText = "Error sending request: " + error.message;
+                statusText.style.color = "red";
+            }
+        });
+
+        loadProfile();
+    </script>
+</body>
+</html>
