@@ -502,10 +502,15 @@
                         const card = document.createElement("div");
                         card.className = "request-card";
 
+                        const resumeLinkHTML = request.resumeUrl
+                            ? `<p class="log-details"><a href="${request.resumeUrl}" target="_blank" rel="noopener" style="color: var(--booking-blue); font-weight: bold;">📄 View Resume</a></p>`
+                            : "";
+
                         card.innerHTML = `
                             <div class="student-info">
                                 <h3 class="student-link-title" onclick="viewStudentProfileCard(event, '${request.studentId}')">From: ${displayName} 🔍</h3>
                                 <p class="log-details"><strong>Requested Date:</strong> ${request.requestedDate}</p>
+                                ${resumeLinkHTML}
                                 <p class="student-note">"${request.studentMessage || ""}"</p>
                             </div>
                             <div class="action-buttons">

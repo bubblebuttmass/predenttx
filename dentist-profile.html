@@ -146,6 +146,10 @@
                 <label style="font-weight: bold; display: block; margin-bottom: 5px;">Message / Introduction:</label>
                 <textarea id="student-message" rows="3" placeholder="Introduce yourself! (e.g., 'Hi, I am a junior predental student at UT Austin looking to observe root canals...')"></textarea>
 
+                <label style="font-weight: bold; display: block; margin-bottom: 5px;">Resume (optional, PDF or Word):</label>
+                <input type="file" id="resume-input" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+                <p id="resume-status" style="font-size: 13px; color: #666; margin: -10px 0 15px 0;"></p>
+
                 <button class="btn-apply" id="apply-btn">Submit Booking Request</button>
                 <p id="submit-status"></p>
             </div>
@@ -159,7 +163,7 @@
     </div>
 
     <script type="module">
-        import { auth, db, notify } from './firebase-config.js';
+        import { auth, db, notify, uploadMedia } from './firebase-config.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
         import { doc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
@@ -168,6 +172,37 @@
 
         let currentUser = null;
         let dentistData = null;
+        let resumeUrl = "";
+
+        document.getElementById("resume-input").addEventListener("change", async (e) => {
+            const file = e.target.files[0];
+            const resumeStatus = document.getElementById("resume-status");
+            if (!file) return;
+
+            if (file.size > 5 * 1024 * 1024) {
+                resumeStatus.style.color = "red";
+                resumeStatus.innerText = "File too large — must be under 5MB.";
+                e.target.value = "";
+                return;
+            }
+            if (!currentUser) {
+                resumeStatus.style.color = "red";
+                resumeStatus.innerText = "Please log in before attaching a resume.";
+                e.target.value = "";
+                return;
+            }
+
+            resumeStatus.style.color = "#666";
+            resumeStatus.innerText = "Uploading resume...";
+            try {
+                resumeUrl = await uploadMedia(currentUser.uid, "resume", file);
+                resumeStatus.style.color = "var(--primary-green)";
+                resumeStatus.innerText = `Attached: ${file.name}`;
+            } catch (err) {
+                resumeStatus.style.color = "red";
+                resumeStatus.innerText = "Upload failed: " + err.message;
+            }
+        });
 
         async function loadProfile() {
             if (!dentistId) {
@@ -233,6 +268,7 @@
                 studentEmail: currentUser.email,
                 requestedDate: date,
                 studentMessage: message,
+                resumeUrl: resumeUrl,
                 requestStatus: "pending",
                 timestamp: new Date().toISOString()
             };
@@ -243,6 +279,9 @@
 
                 document.getElementById("requested-date").value = "";
                 document.getElementById("student-message").value = "";
+                document.getElementById("resume-input").value = "";
+                document.getElementById("resume-status").innerText = "";
+                resumeUrl = "";
 
                 if (dentistData) {
                     const dentistDoc = await getDoc(doc(db, "users", dentistId));

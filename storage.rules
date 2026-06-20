@@ -4,15 +4,20 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     // Path convention: {uid}/{prefix}-{timestamp}.{ext}
-    // Anyone can view (avatars/clinic photos/event posters are public),
-    // but only the owner of that uid folder can write into it, and only
-    // images under 5MB.
+    // Anyone can view (avatars/clinic photos/event posters are public, and
+    // resume links are only ever shared with the dentist a student applied
+    // to), but only the owner of that uid folder can write into it.
     match /{userId}/{fileName} {
       allow read: if true;
       allow write: if request.auth != null
                     && request.auth.uid == userId
                     && request.resource.size < 5 * 1024 * 1024
-                    && request.resource.contentType.matches('image/.*');
+                    && (
+                      request.resource.contentType.matches('image/.*') ||
+                      request.resource.contentType == 'application/pdf' ||
+                      request.resource.contentType == 'application/msword' ||
+                      request.resource.contentType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                    );
     }
   }
 }
