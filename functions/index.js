@@ -21,7 +21,7 @@ const admin = require("firebase-admin");
 admin.initializeApp();
 
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
-const FROM_EMAIL = "PreDentTX <onboarding@resend.dev>"; // swap once you verify your own domain in Resend
+const FROM_EMAIL = "PreDentTX <notifications@predenttx.com>"; // requires predenttx.com to be verified in Resend (Domains tab)
 
 exports.sendNotificationEmail = onCall({ secrets: [RESEND_API_KEY] }, async (request) => {
   if (!request.auth) {
