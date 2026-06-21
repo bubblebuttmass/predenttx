@@ -16,6 +16,7 @@
             --dark-text: #333333;
             --card-bg: #FFFFFF;
             --event-purple: #8e44ad;
+            --job-teal: #16817a;
         }
 
         body {
@@ -96,6 +97,9 @@
         .event-badge { background: var(--event-purple); color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-bottom: 10px; display: inline-block; }
         .event-detail { font-size: 13px; color: #555; margin: 5px 0; display: flex; align-items: flex-start; gap: 5px; }
         .event-contact-box { background: #f9f9f9; border-left: 3px solid var(--event-purple); padding: 10px; margin-top: 15px; font-size: 13px; border-radius: 4px; }
+        .job-card { border-top-color: var(--job-teal); }
+        .job-badge { background: var(--job-teal); color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-bottom: 10px; display: inline-block; }
+        .job-contact-box { border-left-color: var(--job-teal); }
 
         .btn-view-profile {
             background-color: var(--primary-gold); color: var(--dark-text);
@@ -122,6 +126,7 @@
         <div class="search-toggle">
             <button class="toggle-btn active" id="toggle-clinics">Find Clinics</button>
             <button class="toggle-btn" id="toggle-events">Find Events</button>
+            <button class="toggle-btn" id="toggle-jobs">Find Jobs</button>
         </div>
 
         <div class="search-container">
@@ -151,20 +156,28 @@
 
         const toggleClinicsBtn = document.getElementById("toggle-clinics");
         const toggleEventsBtn = document.getElementById("toggle-events");
+        const toggleJobsBtn = document.getElementById("toggle-jobs");
         let activeSearchMode = "clinics";
 
+        function setActiveToggle(mode, btn) {
+            activeSearchMode = mode;
+            [toggleClinicsBtn, toggleEventsBtn, toggleJobsBtn].forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+        }
+
         toggleClinicsBtn.addEventListener("click", () => {
-            activeSearchMode = "clinics";
-            toggleClinicsBtn.classList.add("active");
-            toggleEventsBtn.classList.remove("active");
+            setActiveToggle("clinics", toggleClinicsBtn);
             searchInput.placeholder = "Search clinics by city (e.g., Austin)";
         });
 
         toggleEventsBtn.addEventListener("click", () => {
-            activeSearchMode = "events";
-            toggleEventsBtn.classList.add("active");
-            toggleClinicsBtn.classList.remove("active");
+            setActiveToggle("events", toggleEventsBtn);
             searchInput.placeholder = "Search events by city (e.g., Dallas)";
+        });
+
+        toggleJobsBtn.addEventListener("click", () => {
+            setActiveToggle("jobs", toggleJobsBtn);
+            searchInput.placeholder = "Search paid positions by city (e.g., Houston)";
         });
 
         onAuthStateChanged(auth, async (user) => {
@@ -239,7 +252,7 @@
                         resultsContainer.appendChild(card);
                     });
 
-                } else {
+                } else if (activeSearchMode === "events") {
                     const q = query(
                         collection(db, "events"),
                         where("city", ">=", cityQuery),
@@ -285,6 +298,44 @@
                                 <div class="event-contact-box">
                                     <strong>Contact for info/RSVP:</strong><br>
                                     ${eventData.contactInfo || ""}
+                                </div>
+                            </div>
+                        `;
+                        resultsContainer.appendChild(card);
+                    });
+
+                } else {
+                    const q = query(
+                        collection(db, "jobs"),
+                        where("city", ">=", cityQuery),
+                        where("city", "<=", prefixEnd)
+                    );
+                    const querySnapshot = await getDocs(q);
+                    resultsContainer.innerHTML = "";
+
+                    if (querySnapshot.empty) {
+                        resultsContainer.innerHTML = "<p>No paid positions posted in this city yet.</p>";
+                        return;
+                    }
+
+                    querySnapshot.forEach((docSnap) => {
+                        const job = docSnap.data();
+                        const card = document.createElement("div");
+                        card.className = "clinic-card job-card";
+
+                        card.innerHTML = `
+                            <div>
+                                <span class="job-badge">${job.jobType || "Paid Position"}</span>
+                                <h3 style="margin-bottom: 5px; color: var(--primary-green);">${job.title}</h3>
+                                <p style="font-size: 13px; color: #888; margin: 0 0 10px 0;">Hiring at: <strong>${job.hostName || ""}</strong></p>
+
+                                ${job.payRate ? `<p class="event-detail">💵 <strong>Pay:</strong> ${job.payRate}</p>` : ""}
+                                <p class="event-detail">📍 <strong>Location:</strong> ${job.location || ""}</p>
+                                <p style="font-size: 14px; color: #444; margin-top: 10px; line-height: 1.4;">${job.description || ""}</p>
+
+                                <div class="event-contact-box job-contact-box">
+                                    <strong>How to Apply:</strong><br>
+                                    ${job.contactInfo || ""}
                                 </div>
                             </div>
                         `;

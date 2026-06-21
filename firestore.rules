@@ -71,6 +71,16 @@ service cloud.firestore {
     }
 
     // ----------------------------------------------------
+    // jobs — paid position listings (sterile tech, dental
+    // assistant, front desk, etc.) posted by dentists
+    // ----------------------------------------------------
+    match /jobs/{jobId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.hostId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.hostId == request.auth.uid;
+    }
+
+    // ----------------------------------------------------
     // shadowing_logs — verified hours
     // dentistId is now a required field. The old schema had no dentist link
     // at all, so the dentist dashboard pulled every clinic's pending logs —
@@ -82,7 +92,8 @@ service cloud.firestore {
 
       allow create: if isSignedIn() &&
         request.resource.data.studentId == request.auth.uid &&
-        request.resource.data.status == 'pending';
+        request.resource.data.status == 'pending' &&
+        request.resource.data.category in ['shadowing', 'volunteering', 'paid'];
 
       allow update: if isSignedIn() &&
         resource.data.dentistId == request.auth.uid &&

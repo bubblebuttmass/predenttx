@@ -129,6 +129,7 @@
             <div class="info-section">
                 <h3>Location</h3>
                 <p id="display-city">-</p>
+                <p id="display-address" style="margin-top: 5px; color: #555;"></p>
             </div>
 
             <div class="info-section">
@@ -220,6 +221,7 @@
                     document.getElementById("display-clinic-name").innerText = dentistData.clinicName || "";
                     document.getElementById("display-specialty").innerText = dentistData.specialty || "General Dentistry";
                     document.getElementById("display-city").innerText = dentistData.city ? dentistData.city.toUpperCase() : "Texas";
+                    document.getElementById("display-address").innerText = dentistData.address || "";
                     document.getElementById("display-requirements").innerText = dentistData.requirements || "No specific requirements listed.";
                 }
             } catch (error) {

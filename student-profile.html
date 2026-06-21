@@ -125,6 +125,9 @@
         .badge.declined { background-color: #fceae9; color: var(--deny-red); border: 1px solid var(--deny-red); }
         .badge.approved { background-color: #eaf2ee; color: var(--primary-green); border: 1px solid var(--primary-green); }
         .badge.denied { background-color: #fceae9; color: var(--deny-red); border: 1px solid var(--deny-red); }
+        .badge.shadowing { background-color: #eaf2ee; color: var(--primary-green); border: 1px solid var(--primary-green); }
+        .badge.volunteering { background-color: #eef2fb; color: #2980b9; border: 1px solid #2980b9; }
+        .badge.paid { background-color: #f1ece1; color: var(--primary-gold); border: 1px solid var(--primary-gold); }
 
         .dentist-message-box {
             background-color: #fff; border-left: 4px solid var(--primary-gold);
@@ -135,6 +138,11 @@
         .log-hours-row { display: flex; gap: 15px; align-items: flex-start; }
         @media (max-width: 600px) { .log-hours-row { flex-direction: column; } }
         .log-hours-row > * { flex: 1; }
+        .hours-summary-row { display: flex; gap: 15px; margin-bottom: 20px; }
+        @media (max-width: 600px) { .hours-summary-row { flex-direction: column; } }
+        .hours-summary-box { flex: 1; background: #f5f5f5; border-radius: 8px; padding: 15px; text-align: center; }
+        .hours-summary-num { display: block; font-size: 28px; font-weight: bold; color: var(--primary-green); }
+        .hours-summary-label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
     </style>
 </head>
 <body>
@@ -197,11 +205,32 @@
         </div>
 
         <div class="card-section">
-            <h2>Log Shadowing Hours</h2>
-            <p style="font-size: 14px; color: #666; margin-top: 0;">Once a clinic accepts a request, log the hours you actually shadowed there for the dentist to verify.</p>
+            <h2>Log Hours</h2>
+            <p style="font-size: 14px; color: #666; margin-top: 0;">Track shadowing, volunteering, and paid hours at clinics you've connected with. Once a dentist approves a log, it counts toward your totals below.</p>
+
+            <div class="hours-summary-row">
+                <div class="hours-summary-box">
+                    <span class="hours-summary-num" id="total-shadowing">0</span>
+                    <span class="hours-summary-label">Shadowing hrs</span>
+                </div>
+                <div class="hours-summary-box">
+                    <span class="hours-summary-num" id="total-volunteering">0</span>
+                    <span class="hours-summary-label">Volunteering hrs</span>
+                </div>
+                <div class="hours-summary-box">
+                    <span class="hours-summary-num" id="total-paid">0</span>
+                    <span class="hours-summary-label">Paid hrs</span>
+                </div>
+            </div>
+
             <div class="log-hours-row">
                 <select id="log-request-select">
-                    <option value="">Select an accepted clinic...</option>
+                    <option value="">Select a clinic...</option>
+                </select>
+                <select id="log-category-select">
+                    <option value="shadowing">Shadowing</option>
+                    <option value="volunteering">Volunteering</option>
+                    <option value="paid">Paid</option>
                 </select>
                 <input type="date" id="log-date">
                 <input type="number" id="log-hours" placeholder="Hours" min="0.5" step="0.5">
@@ -446,11 +475,12 @@
             const status = document.getElementById("log-status");
             const submitBtn = document.getElementById("submit-log-btn");
             const requestId = logRequestSelect.value;
+            const category = document.getElementById("log-category-select").value;
             const logDate = document.getElementById("log-date").value;
             const hours = parseFloat(document.getElementById("log-hours").value);
 
-            if (!requestId) { status.style.color = "red"; status.innerText = "Pick which clinic you shadowed at."; return; }
-            if (!logDate) { status.style.color = "red"; status.innerText = "Pick the date you shadowed."; return; }
+            if (!requestId) { status.style.color = "red"; status.innerText = "Pick which clinic this was at."; return; }
+            if (!logDate) { status.style.color = "red"; status.innerText = "Pick the date."; return; }
             if (!hours || hours <= 0) { status.style.color = "red"; status.innerText = "Enter a valid number of hours."; return; }
 
             const matchedRequest = acceptedRequestsCache.find(r => r.id === requestId);
@@ -465,6 +495,7 @@
                     studentId: currentUid,
                     dentistId: matchedRequest.dentistId,
                     clinicName: matchedRequest.clinicName,
+                    category,
                     hours,
                     logDate,
                     status: "pending",
@@ -484,23 +515,37 @@
 
         async function loadStudentLogs(uid) {
             logsContainer.innerHTML = "";
+            const totals = { shadowing: 0, volunteering: 0, paid: 0 };
+
             try {
                 const q = query(collection(db, "shadowing_logs"), where("studentId", "==", uid));
                 const snap = await getDocs(q);
-                if (snap.empty) return;
 
                 snap.forEach((d) => {
                     const log = d.data();
+                    const category = log.category || "shadowing"; // older logs predate categorization
+
+                    if (log.status === "approved" && totals.hasOwnProperty(category)) {
+                        totals[category] += Number(log.hours) || 0;
+                    }
+
                     const row = document.createElement("div");
                     row.className = "status-row";
                     row.style.borderBottom = "1px solid #eee";
                     row.style.padding = "10px 0";
                     row.innerHTML = `
-                        <span style="font-size: 14px;">${log.clinicName || "Clinic"} — ${log.hours} hrs on ${log.logDate}</span>
+                        <span style="font-size: 14px;">
+                            <span class="badge ${category}" style="margin-right: 8px; font-size: 10px; padding: 3px 8px;">${category}</span>
+                            ${log.clinicName || "Clinic"} — ${log.hours} hrs on ${log.logDate}
+                        </span>
                         <span class="badge ${log.status}">${log.status}</span>
                     `;
                     logsContainer.appendChild(row);
                 });
+
+                document.getElementById("total-shadowing").innerText = totals.shadowing;
+                document.getElementById("total-volunteering").innerText = totals.volunteering;
+                document.getElementById("total-paid").innerText = totals.paid;
             } catch (err) {
                 console.error(err);
             }

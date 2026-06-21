@@ -15,6 +15,7 @@
             --deny-red: #e74c3c;
             --booking-blue: #2980b9;
             --event-purple: #8e44ad;
+            --job-teal: #16817a;
         }
 
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: var(--off-white); color: var(--dark-text); }
@@ -40,6 +41,7 @@
 
         .card-section { background-color: var(--card-bg); padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 30px; border-top: 5px solid var(--primary-gold); }
         .card-section.events { border-top-color: var(--event-purple); }
+        .card-section.jobs { border-top-color: var(--job-teal); }
         .card-section.inbox { border-top-color: var(--pending-yellow); }
         .card-section.bookings { border-top-color: var(--booking-blue); }
         .card-section h2 { margin-top: 0; color: var(--dark-text); border-bottom: 2px solid var(--off-white); padding-bottom: 10px; }
@@ -63,6 +65,8 @@
         button:disabled { background-color: #aaa; cursor: not-allowed; }
         .btn-event { background-color: var(--event-purple); }
         .btn-event:hover { background-color: #732d91; }
+        .btn-job { background-color: var(--job-teal); }
+        .btn-job:hover { background-color: #106560; }
 
         .request-card { border: 1px solid #eee; border-radius: 8px; padding: 20px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; background-color: #fafafa; }
         @media (max-width: 600px) { .request-card { flex-direction: column; gap: 15px; align-items: flex-start; } .action-buttons { width: 100%; } .action-buttons button { width: 100% !important; } }
@@ -142,6 +146,7 @@
                 <option value="Oral Surgery">Oral Surgery</option>
             </select>
             <input type="text" id="profile-city" placeholder="City">
+            <input type="text" id="profile-address" placeholder="Street Address (e.g., 123 Main St, Suite 200)">
             <textarea id="profile-requirements" rows="2" placeholder="Shadowing Requirements"></textarea>
             <label style="font-weight: bold; display: block; margin-bottom: 5px;">Clinic Showcase Photo:</label>
             <div class="upload-drop-zone" id="drop-zone">
@@ -175,6 +180,28 @@
 
             <button id="create-event-btn" class="btn-event">Publish Event to Feed</button>
             <p id="event-status" style="color: var(--event-purple); font-weight: bold; margin-top: 10px;"></p>
+        </div>
+
+        <div class="card-section jobs">
+            <h2>Post a Paid Position</h2>
+            <p style="font-size: 14px; color: #666; margin-top: 0;">Hiring a sterile tech, dental assistant, or front desk staff? Post it here — listings show up in the Jobs search on the homepage.</p>
+
+            <input type="text" id="job-title" placeholder="Job Title (e.g., Sterile Technician, Dental Assistant)">
+            <select id="job-type">
+                <option value="Sterile Technician">Sterile Technician</option>
+                <option value="Dental Assistant">Dental Assistant</option>
+                <option value="Front Desk / Receptionist">Front Desk / Receptionist</option>
+                <option value="Hygienist">Hygienist</option>
+                <option value="Other">Other</option>
+            </select>
+            <input type="text" id="job-pay" placeholder="Pay Rate (e.g., $18-22/hr)">
+            <input type="text" id="job-location" placeholder="Exact Location / Address">
+            <input type="text" id="job-city" placeholder="City (Important for search)">
+            <textarea id="job-description" rows="3" placeholder="Describe the role, hours, and requirements..."></textarea>
+            <input type="text" id="job-contact" placeholder="How to Apply (email, phone, or link)">
+
+            <button id="create-job-btn" class="btn-job">Publish Job Listing</button>
+            <p id="job-status" style="color: var(--job-teal); font-weight: bold; margin-top: 10px;"></p>
         </div>
 
         <div class="card-section bookings">
@@ -390,6 +417,7 @@
                 document.getElementById("profile-doctor-name").value = data.doctorName || "";
                 document.getElementById("profile-specialty").value = data.specialty || "General Dentistry";
                 document.getElementById("profile-city").value = data.city || "";
+                document.getElementById("profile-address").value = data.address || "";
                 document.getElementById("profile-requirements").value = data.requirements || "";
 
                 if (data.clinicImage) { clinicImageString = data.clinicImage; previewImg.src = clinicImageString; previewImg.style.display = "block"; uploadPrompt.style.display = "none"; }
@@ -408,6 +436,7 @@
                 doctorName: document.getElementById("profile-doctor-name").value,
                 specialty: document.getElementById("profile-specialty").value,
                 city: document.getElementById("profile-city").value.trim().toLowerCase(),
+                address: document.getElementById("profile-address").value.trim(),
                 requirements: document.getElementById("profile-requirements").value,
                 clinicImage: clinicImageString,
                 doctorProfilePic: profileImageString
@@ -464,6 +493,54 @@
                 eventImageString = "";
                 eventPreviewImg.style.display = "none";
                 eventUploadPrompt.style.display = "block";
+            } catch (error) {
+                statusMsg.style.color = "red";
+                statusMsg.innerText = "Error: " + error.message;
+            } finally {
+                createBtn.disabled = false;
+            }
+        });
+
+        document.getElementById("create-job-btn").addEventListener("click", async () => {
+            const statusMsg = document.getElementById("job-status");
+            const createBtn = document.getElementById("create-job-btn");
+
+            const title = document.getElementById("job-title").value.trim();
+            const city = document.getElementById("job-city").value.trim().toLowerCase();
+            const contact = document.getElementById("job-contact").value.trim();
+
+            if (!title || !city || !contact) {
+                statusMsg.style.color = "red";
+                statusMsg.innerText = "Job title, city, and how-to-apply info are required.";
+                return;
+            }
+
+            createBtn.disabled = true;
+            statusMsg.style.color = "var(--job-teal)";
+            statusMsg.innerText = "Publishing job listing...";
+
+            const jobData = {
+                hostId: currentUserId,
+                hostName: document.getElementById("profile-clinic-name").value || document.getElementById("profile-doctor-name").value || "Local Clinic",
+                title: title,
+                jobType: document.getElementById("job-type").value,
+                payRate: document.getElementById("job-pay").value.trim(),
+                location: document.getElementById("job-location").value.trim(),
+                city: city,
+                description: document.getElementById("job-description").value.trim(),
+                contactInfo: contact,
+                datePosted: Timestamp.now()
+            };
+
+            try {
+                await addDoc(collection(db, "jobs"), jobData);
+                statusMsg.innerText = "Success! Your job listing is live and searchable.";
+
+                document.getElementById("job-title").value = "";
+                document.getElementById("job-pay").value = "";
+                document.getElementById("job-location").value = "";
+                document.getElementById("job-description").value = "";
+                document.getElementById("job-contact").value = "";
             } catch (error) {
                 statusMsg.style.color = "red";
                 statusMsg.innerText = "Error: " + error.message;
@@ -612,7 +689,7 @@
                     card.innerHTML = `
                         <div class="student-info">
                             <h3>From Student: ${studentLabel}</h3>
-                            <p class="log-details"><strong>Clinic:</strong> ${log.clinicName || ""} | <strong>Hours:</strong> ${log.hours} | <strong>Date:</strong> ${log.logDate}</p>
+                            <p class="log-details"><strong>Type:</strong> ${(log.category || "shadowing")} | <strong>Clinic:</strong> ${log.clinicName || ""} | <strong>Hours:</strong> ${log.hours} | <strong>Date:</strong> ${log.logDate}</p>
                         </div>
                         <div class="action-buttons">
                             <button class="btn-approve" onclick="updateLogStatus('${logId}', 'approved')">✓ Approve</button>
