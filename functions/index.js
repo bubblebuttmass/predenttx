@@ -58,6 +58,7 @@ async function sendViaResend(to, subject, html) {
   const data = await resendResponse.json();
 
   if (!resendResponse.ok) {
+    console.error(`[sendViaResend] Resend rejected the request (status ${resendResponse.status}): ${JSON.stringify(data)}`);
     throw new HttpsError("internal", data.message || "Email provider rejected the request.");
   }
 
@@ -78,40 +79,56 @@ exports.sendNotificationEmail = onCall({ secrets: [RESEND_API_KEY] }, async (req
 
   const reqSnap = await db.collection("shadowing_requests").doc(requestId).get();
   if (!reqSnap.exists) {
+    console.error(`[sendNotificationEmail] Request not found: ${requestId}`);
     throw new HttpsError("not-found", "Request not found.");
   }
   const reqData = reqSnap.data();
   const safeDate = escapeHtml(reqData.requestedDate);
 
+  console.log(`[sendNotificationEmail] type=${type} requestId=${requestId} callerUid=${callerUid}`);
+
   if (type === "new_request") {
     // Only the student who actually owns this request can trigger this —
     // and it only ever goes to the real dentist on that same request.
     if (reqData.studentId !== callerUid) {
+      console.error(`[sendNotificationEmail] permission-denied: caller=${callerUid} studentId=${reqData.studentId}`);
       throw new HttpsError("permission-denied", "Not authorized for this request.");
     }
 
     const dentistSnap = await db.collection("users").doc(reqData.dentistId).get();
     const dentistEmail = dentistSnap.exists ? dentistSnap.data().email : null;
-    if (!dentistEmail) throw new HttpsError("not-found", "Dentist email not found.");
+    if (!dentistEmail) {
+      console.error(`[sendNotificationEmail] Dentist email not found for dentistId=${reqData.dentistId}, dentistDoc exists=${dentistSnap.exists}`);
+      throw new HttpsError("not-found", "Dentist email not found.");
+    }
 
-    return sendViaResend(
+    console.log(`[sendNotificationEmail] Sending new_request email to ${dentistEmail}`);
+    const result = await sendViaResend(
       dentistEmail,
       `New shadowing request — ${safeDate}`,
       `<p><strong>${escapeHtml(reqData.studentEmail)}</strong> requested to shadow on <strong>${safeDate}</strong>.</p>
        <p>Message: ${escapeHtml(reqData.studentMessage) || "(none)"}</p>
        <p>Log in to PreDentTX to accept or decline.</p>`
     );
+    console.log(`[sendNotificationEmail] Resend response: ${JSON.stringify(result)}`);
+    return result;
   }
 
   if (type === "accepted" || type === "declined") {
     // Only the dentist who actually owns this request can trigger this —
     // and it only ever goes to the real student on that same request.
     if (reqData.dentistId !== callerUid) {
+      console.error(`[sendNotificationEmail] permission-denied: caller=${callerUid} dentistId=${reqData.dentistId}`);
       throw new HttpsError("permission-denied", "Not authorized for this request.");
     }
 
     const studentEmail = reqData.studentEmail;
-    if (!studentEmail) throw new HttpsError("not-found", "Student email not found.");
+    if (!studentEmail) {
+      console.error(`[sendNotificationEmail] Student email missing on request ${requestId}`);
+      throw new HttpsError("not-found", "Student email not found.");
+    }
+
+    console.log(`[sendNotificationEmail] Sending ${type} email to ${studentEmail}`);
 
     if (type === "accepted") {
       return sendViaResend(
