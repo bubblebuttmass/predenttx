@@ -182,6 +182,13 @@
             <p id="event-status" style="color: var(--event-purple); font-weight: bold; margin-top: 10px;"></p>
         </div>
 
+        <div class="card-section events">
+            <h2>Event Applications</h2>
+            <div id="event-applications-container">
+                <p class="empty-message">Loading...</p>
+            </div>
+        </div>
+
         <div class="card-section jobs">
             <h2>Post a Paid Position</h2>
             <p style="font-size: 14px; color: #666; margin-top: 0;">Hiring a sterile tech, dental assistant, or front desk staff? Post it here — listings show up in the Jobs search on the homepage.</p>
@@ -202,6 +209,13 @@
 
             <button id="create-job-btn" class="btn-job">Publish Job Listing</button>
             <p id="job-status" style="color: var(--job-teal); font-weight: bold; margin-top: 10px;"></p>
+        </div>
+
+        <div class="card-section jobs">
+            <h2>Job Applications</h2>
+            <div id="job-applications-container">
+                <p class="empty-message">Loading...</p>
+            </div>
         </div>
 
         <div class="card-section bookings">
@@ -305,6 +319,8 @@
                 loadPendingLogs(user.uid);
                 loadDateRequests(user.uid);
                 loadExistingProfile(user.uid);
+                loadEventApplications(user.uid);
+                loadJobApplications(user.uid);
             } else {
                 alert("Access Denied.");
                 window.location.href = "student-profile.html";
@@ -685,6 +701,70 @@
                 await updateDoc(logRef, { status: newStatus });
                 alert(`Log updated!`);
                 loadPendingLogs(currentUserId);
+            } catch (error) { alert(error.message); }
+        };
+
+        // Shared by Event Applications and Job Applications — same shape,
+        // just a different collection and which field holds the listing's title.
+        async function loadApplications(collectionName, containerId, titleField, dentistUid) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = "";
+            try {
+                const q = query(collection(db, collectionName), where("hostId", "==", dentistUid), where("status", "==", "pending"));
+                const querySnapshot = await getDocs(q);
+                let found = false;
+
+                for (const docSnap of querySnapshot.docs) {
+                    found = true;
+                    const app = docSnap.data();
+                    const appId = docSnap.id;
+
+                    const studentDoc = await getDoc(doc(db, "users", app.studentId));
+                    const displayName = studentDoc.exists() && studentDoc.data().firstName
+                        ? `${studentDoc.data().firstName} ${studentDoc.data().lastName || ""}`
+                        : (app.studentEmail || "Student");
+
+                    const resumeLinkHTML = app.resumeUrl
+                        ? `<p class="log-details"><a href="${escapeHtml(app.resumeUrl)}" target="_blank" rel="noopener" style="color: var(--booking-blue); font-weight: bold;">📄 View Resume</a></p>`
+                        : "";
+
+                    const card = document.createElement("div");
+                    card.className = "request-card";
+                    card.innerHTML = `
+                        <div class="student-info">
+                            <h3 class="student-link-title" onclick="viewStudentProfileCard(event, '${app.studentId}')">From: ${escapeHtml(displayName)} 🔍</h3>
+                            <p class="log-details"><strong>Applied for:</strong> ${escapeHtml(app[titleField]) || ""}</p>
+                            ${resumeLinkHTML}
+                            <p class="student-note">"${escapeHtml(app.message) || ""}"</p>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn-approve" onclick="updateApplicationStatus('${collectionName}', '${appId}', 'accepted')">✓ Accept</button>
+                            <button class="btn-deny" onclick="updateApplicationStatus('${collectionName}', '${appId}', 'declined')">✗ Decline</button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                }
+                if (!found) container.innerHTML = '<p class="empty-message">No pending applications.</p>';
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+            }
+        }
+
+        function loadEventApplications(dentistUid) {
+            return loadApplications("event_applications", "event-applications-container", "eventTitle", dentistUid);
+        }
+        function loadJobApplications(dentistUid) {
+            return loadApplications("job_applications", "job-applications-container", "jobTitle", dentistUid);
+        }
+
+        window.updateApplicationStatus = async (collectionName, appId, newStatus) => {
+            const ref = doc(db, collectionName, appId);
+            try {
+                await updateDoc(ref, { status: newStatus });
+                alert(newStatus === "accepted" ? "Application accepted!" : "Application declined.");
+                if (collectionName === "event_applications") loadEventApplications(currentUserId);
+                else loadJobApplications(currentUserId);
             } catch (error) { alert(error.message); }
         };
 

@@ -81,6 +81,46 @@ service cloud.firestore {
     }
 
     // ----------------------------------------------------
+    // event_applications / job_applications — students applying
+    // to a posted event or paid position with a message + resume.
+    // Same ownership pattern as shadowing_requests: hostId is the
+    // dentist who posted it, studentId is the applicant.
+    // ----------------------------------------------------
+    match /event_applications/{appId} {
+      allow read: if isSignedIn() &&
+        (resource.data.studentId == request.auth.uid || resource.data.hostId == request.auth.uid);
+
+      allow create: if isSignedIn() &&
+        request.resource.data.studentId == request.auth.uid &&
+        request.resource.data.status == 'pending';
+
+      allow update: if isSignedIn() &&
+        resource.data.hostId == request.auth.uid &&
+        request.resource.data.studentId == resource.data.studentId &&
+        request.resource.data.hostId == resource.data.hostId &&
+        request.resource.data.status in ['accepted', 'declined'];
+
+      allow delete: if false;
+    }
+
+    match /job_applications/{appId} {
+      allow read: if isSignedIn() &&
+        (resource.data.studentId == request.auth.uid || resource.data.hostId == request.auth.uid);
+
+      allow create: if isSignedIn() &&
+        request.resource.data.studentId == request.auth.uid &&
+        request.resource.data.status == 'pending';
+
+      allow update: if isSignedIn() &&
+        resource.data.hostId == request.auth.uid &&
+        request.resource.data.studentId == resource.data.studentId &&
+        request.resource.data.hostId == resource.data.hostId &&
+        request.resource.data.status in ['accepted', 'declined'];
+
+      allow delete: if false;
+    }
+
+    // ----------------------------------------------------
     // shadowing_logs — verified hours
     // dentistId is now a required field. The old schema had no dentist link
     // at all, so the dentist dashboard pulled every clinic's pending logs —

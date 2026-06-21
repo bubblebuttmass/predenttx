@@ -107,6 +107,34 @@
             border-radius: 5px; font-weight: bold; font-size: 14px; transition: 0.2s;
         }
         .btn-view-profile:hover { background-color: #b5952f; }
+        .btn-apply-listing {
+            width: 100%; border: none; cursor: pointer; padding: 10px;
+            border-radius: 5px; font-weight: bold; font-size: 14px; color: white;
+            margin-top: 12px; transition: 0.2s;
+        }
+        .btn-apply-listing.event-flavor { background-color: var(--event-purple); }
+        .btn-apply-listing.event-flavor:hover { background-color: #732d91; }
+        .btn-apply-listing.job-flavor { background-color: var(--job-teal); }
+        .btn-apply-listing.job-flavor:hover { background-color: #106560; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 1000; display: none;
+            justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;
+        }
+        .modal-box {
+            background: white; padding: 25px; border-radius: 12px; width: 100%;
+            max-width: 450px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+        .modal-box h3 { margin-top: 0; color: var(--primary-green); }
+        .modal-box textarea, .modal-box input[type="file"] {
+            width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc;
+            border-radius: 5px; box-sizing: border-box; font-family: inherit; font-size: 14px;
+        }
+        .modal-box button { font-family: inherit; padding: 10px 18px; border: none; border-radius: 5px; font-weight: bold; font-size: 14px; cursor: pointer; color: white; background-color: var(--primary-green); }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 15px; }
+        .btn-cancel { background-color: #7f8c8d; }
+        .btn-cancel:hover { background-color: #626d6e; }
     </style>
 </head>
 <body>
@@ -142,10 +170,26 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="apply-modal">
+        <div class="modal-box">
+            <h3 id="apply-modal-title">Apply</h3>
+            <p style="font-size: 13px; color: #666; margin-top: -8px;">Send a quick note and (optionally) your resume.</p>
+            <textarea id="apply-message" rows="4" placeholder="Introduce yourself and explain why you're interested..."></textarea>
+            <label style="font-weight: bold; display: block; margin-bottom: 5px; font-size: 13px;">Resume (optional, PDF or Word):</label>
+            <input type="file" id="apply-resume-input" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+            <p id="apply-resume-status" style="font-size: 12px; color: #666; margin: -6px 0 0 0;"></p>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="apply-modal-cancel">Cancel</button>
+                <button id="apply-modal-submit">Submit Application</button>
+            </div>
+            <p id="apply-modal-status" style="font-weight: bold; margin-top: 10px; margin-bottom: 0;"></p>
+        </div>
+    </div>
+
     <script type="module">
-        import { auth, db, escapeHtml } from './firebase-config.js';
+        import { auth, db, escapeHtml, uploadMedia } from './firebase-config.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-        import { collection, query, where, orderBy, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+        import { collection, query, where, orderBy, getDocs, doc, getDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
         const searchInput = document.getElementById("search-city");
         const searchBtn = document.getElementById("search-btn");
@@ -158,6 +202,10 @@
         const toggleEventsBtn = document.getElementById("toggle-events");
         const toggleJobsBtn = document.getElementById("toggle-jobs");
         let activeSearchMode = "clinics";
+        let currentUser = null;
+        let applyResumeUrl = "";
+        let activeApplyTarget = null; // { type: 'event'|'job', id, hostId, title }
+        let listingCache = {}; // docId -> { type, hostId, title } — avoids putting free text in onclick attributes
 
         function setActiveToggle(mode, btn) {
             activeSearchMode = mode;
@@ -181,6 +229,7 @@
         });
 
         onAuthStateChanged(auth, async (user) => {
+            currentUser = user;
             if (user) {
                 loginBtn.style.display = "none";
                 navProfileIcon.style.display = "block";
@@ -207,6 +256,7 @@
 
             resultsContainer.innerHTML = "<p>Searching PreDentTX database...</p>";
             resultsTitle.innerText = `Results for "${searchInput.value}"`;
+            listingCache = {};
 
             // Firestore can't do real substring search, but a range query on a
             // sorted field gives us "starts with" matching — a real improvement
@@ -279,6 +329,8 @@
                         const card = document.createElement("div");
                         card.className = "clinic-card event-card";
 
+                        listingCache[docSnap.id] = { type: "event", hostId: eventData.hostId, title: eventData.title };
+
                         const eventImage = eventData.eventImage || "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80&w=400";
                         const formattedDate = eventData.eventDate.toDate().toLocaleString('en-US', {
                             weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
@@ -299,6 +351,7 @@
                                     <strong>Contact for info/RSVP:</strong><br>
                                     ${escapeHtml(eventData.contactInfo) || ""}
                                 </div>
+                                <button class="btn-apply-listing event-flavor" onclick="openApplyModal('${docSnap.id}')">Apply / Send Resume</button>
                             </div>
                         `;
                         resultsContainer.appendChild(card);
@@ -323,6 +376,8 @@
                         const card = document.createElement("div");
                         card.className = "clinic-card job-card";
 
+                        listingCache[docSnap.id] = { type: "job", hostId: job.hostId, title: job.title };
+
                         card.innerHTML = `
                             <div>
                                 <span class="job-badge">${escapeHtml(job.jobType) || "Paid Position"}</span>
@@ -337,6 +392,7 @@
                                     <strong>How to Apply:</strong><br>
                                     ${escapeHtml(job.contactInfo) || ""}
                                 </div>
+                                <button class="btn-apply-listing job-flavor" onclick="openApplyModal('${docSnap.id}')">Apply / Send Resume</button>
                             </div>
                         `;
                         resultsContainer.appendChild(card);
@@ -344,6 +400,96 @@
                 }
             } catch (error) {
                 resultsContainer.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+            }
+        });
+
+        // --- Apply modal: shared by both Events and Jobs ---
+
+        window.openApplyModal = (id) => {
+            if (!currentUser) {
+                alert("Please log in first to apply.");
+                window.location.href = "login.html";
+                return;
+            }
+            const target = listingCache[id];
+            if (!target) return;
+
+            activeApplyTarget = { ...target, id };
+            document.getElementById("apply-modal-title").innerText = `Apply: ${target.title}`;
+            document.getElementById("apply-message").value = "";
+            document.getElementById("apply-resume-input").value = "";
+            document.getElementById("apply-resume-status").innerText = "";
+            document.getElementById("apply-modal-status").innerText = "";
+            applyResumeUrl = "";
+            document.getElementById("apply-modal").style.display = "flex";
+        };
+
+        document.getElementById("apply-modal-cancel").addEventListener("click", () => {
+            document.getElementById("apply-modal").style.display = "none";
+        });
+
+        document.getElementById("apply-resume-input").addEventListener("change", async (e) => {
+            const file = e.target.files[0];
+            const status = document.getElementById("apply-resume-status");
+            if (!file) return;
+
+            if (file.size > 5 * 1024 * 1024) {
+                status.style.color = "red";
+                status.innerText = "File too large — must be under 5MB.";
+                e.target.value = "";
+                return;
+            }
+
+            status.style.color = "#666";
+            status.innerText = "Uploading resume...";
+            try {
+                applyResumeUrl = await uploadMedia(currentUser.uid, "resume", file);
+                status.style.color = "var(--primary-green)";
+                status.innerText = `Attached: ${file.name}`;
+            } catch (err) {
+                status.style.color = "red";
+                status.innerText = "Upload failed: " + err.message;
+            }
+        });
+
+        document.getElementById("apply-modal-submit").addEventListener("click", async () => {
+            const statusEl = document.getElementById("apply-modal-status");
+            const submitBtn = document.getElementById("apply-modal-submit");
+            const message = document.getElementById("apply-message").value.trim();
+
+            if (!activeApplyTarget || !currentUser) return;
+
+            submitBtn.disabled = true;
+            statusEl.style.color = "var(--primary-green)";
+            statusEl.innerText = "Submitting...";
+
+            const collectionName = activeApplyTarget.type === "event" ? "event_applications" : "job_applications";
+            const payload = {
+                hostId: activeApplyTarget.hostId,
+                studentId: currentUser.uid,
+                studentEmail: currentUser.email,
+                message,
+                resumeUrl: applyResumeUrl,
+                status: "pending",
+                timestamp: new Date().toISOString()
+            };
+            if (activeApplyTarget.type === "event") {
+                payload.eventId = activeApplyTarget.id;
+                payload.eventTitle = activeApplyTarget.title;
+            } else {
+                payload.jobId = activeApplyTarget.id;
+                payload.jobTitle = activeApplyTarget.title;
+            }
+
+            try {
+                await addDoc(collection(db, collectionName), payload);
+                statusEl.innerText = "Application sent!";
+                setTimeout(() => { document.getElementById("apply-modal").style.display = "none"; }, 1200);
+            } catch (err) {
+                statusEl.style.color = "red";
+                statusEl.innerText = "Error: " + err.message;
+            } finally {
+                submitBtn.disabled = false;
             }
         });
     </script>
