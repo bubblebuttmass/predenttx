@@ -70,6 +70,9 @@
 
         .request-card { border: 1px solid #eee; border-radius: 8px; padding: 20px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; background-color: #fafafa; }
         @media (max-width: 600px) { .request-card { flex-direction: column; gap: 15px; align-items: flex-start; } .action-buttons { width: 100%; } .action-buttons button { width: 100% !important; } }
+        .listing-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border: 1px solid #eee; border-radius: 6px; margin-bottom: 8px; font-size: 14px; background: #fafafa; }
+        .btn-remove { background-color: transparent; color: #999; border: 1px solid #ccc; padding: 4px 10px; font-size: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-remove:hover { background-color: #fceae9; color: var(--deny-red); border-color: var(--deny-red); }
 
         .student-link-title { margin: 0 0 5px 0; color: var(--primary-green); cursor: pointer; text-decoration: underline; display: inline-block; }
         .student-link-title:hover { color: #074226; }
@@ -180,10 +183,11 @@
 
             <button id="create-event-btn" class="btn-event">Publish Event to Feed</button>
             <p id="event-status" style="color: var(--event-purple); font-weight: bold; margin-top: 10px;"></p>
+            <div id="my-events-list" style="margin-top: 15px;"></div>
         </div>
 
         <div class="card-section events">
-            <h2>Event Applications</h2>
+            <h2>Event RSVPs</h2>
             <div id="event-applications-container">
                 <p class="empty-message">Loading...</p>
             </div>
@@ -209,6 +213,7 @@
 
             <button id="create-job-btn" class="btn-job">Publish Job Listing</button>
             <p id="job-status" style="color: var(--job-teal); font-weight: bold; margin-top: 10px;"></p>
+            <div id="my-jobs-list" style="margin-top: 15px;"></div>
         </div>
 
         <div class="card-section jobs">
@@ -264,7 +269,7 @@
     <script type="module">
         import { auth, db, notify, uploadMedia, escapeHtml } from './firebase-config.js';
         import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-        import { collection, getDocs, doc, updateDoc, getDoc, setDoc, addDoc, query, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+        import { collection, getDocs, doc, updateDoc, getDoc, setDoc, addDoc, query, where, Timestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
         const inboxContainer = document.getElementById("inbox-container");
         const bookingsContainer = document.getElementById("bookings-container");
@@ -321,6 +326,8 @@
                 loadExistingProfile(user.uid);
                 loadEventApplications(user.uid);
                 loadJobApplications(user.uid);
+                loadMyEvents(user.uid);
+                loadMyJobs(user.uid);
             } else {
                 alert("Access Denied.");
                 window.location.href = "student-profile.html";
@@ -509,6 +516,7 @@
                 eventImageString = "";
                 eventPreviewImg.style.display = "none";
                 eventUploadPrompt.style.display = "block";
+                loadMyEvents(currentUserId);
             } catch (error) {
                 statusMsg.style.color = "red";
                 statusMsg.innerText = "Error: " + error.message;
@@ -557,6 +565,7 @@
                 document.getElementById("job-location").value = "";
                 document.getElementById("job-description").value = "";
                 document.getElementById("job-contact").value = "";
+                loadMyJobs(currentUserId);
             } catch (error) {
                 statusMsg.style.color = "red";
                 statusMsg.innerText = "Error: " + error.message;
@@ -705,9 +714,11 @@
             } catch (error) { alert(error.message); }
         };
 
-        // Shared by Event Applications and Job Applications — same shape,
-        // just a different collection and which field holds the listing's title.
-        async function loadApplications(collectionName, containerId, titleField, dentistUid) {
+        // Shared by Event RSVPs and Job Applications — same shape, just a
+        // different collection and which field holds the listing's title.
+        // Events no longer carry a message/resume (RSVP is one-click), so
+        // those sections only render when the data is actually present.
+        async function loadApplications(collectionName, containerId, titleField, label, dentistUid) {
             const container = document.getElementById(containerId);
             container.innerHTML = "";
             try {
@@ -728,15 +739,18 @@
                     const resumeLinkHTML = app.resumeUrl
                         ? `<p class="log-details"><a href="${escapeHtml(app.resumeUrl)}" target="_blank" rel="noopener" style="color: var(--booking-blue); font-weight: bold;">📄 View Resume</a></p>`
                         : "";
+                    const messageHTML = app.message
+                        ? `<p class="student-note">"${escapeHtml(app.message)}"</p>`
+                        : "";
 
                     const card = document.createElement("div");
                     card.className = "request-card";
                     card.innerHTML = `
                         <div class="student-info">
                             <h3 class="student-link-title" onclick="viewStudentProfileCard(event, '${app.studentId}')">From: ${escapeHtml(displayName)} 🔍</h3>
-                            <p class="log-details"><strong>Applied for:</strong> ${escapeHtml(app[titleField]) || ""}</p>
+                            <p class="log-details"><strong>${label}:</strong> ${escapeHtml(app[titleField]) || ""}</p>
                             ${resumeLinkHTML}
-                            <p class="student-note">"${escapeHtml(app.message) || ""}"</p>
+                            ${messageHTML}
                         </div>
                         <div class="action-buttons">
                             <button class="btn-approve" onclick="updateApplicationStatus('${collectionName}', '${appId}', 'accepted')">✓ Accept</button>
@@ -753,11 +767,64 @@
         }
 
         function loadEventApplications(dentistUid) {
-            return loadApplications("event_applications", "event-applications-container", "eventTitle", dentistUid);
+            return loadApplications("event_applications", "event-applications-container", "eventTitle", "Event", dentistUid);
         }
         function loadJobApplications(dentistUid) {
-            return loadApplications("job_applications", "job-applications-container", "jobTitle", dentistUid);
+            return loadApplications("job_applications", "job-applications-container", "jobTitle", "Job", dentistUid);
         }
+
+        // Lets a dentist see and take down their own posted listings —
+        // previously there was no way to remove a posting once it was live.
+        async function loadMyEvents(dentistUid) {
+            const container = document.getElementById("my-events-list");
+            container.innerHTML = "";
+            try {
+                const q = query(collection(db, "events"), where("hostId", "==", dentistUid));
+                const snap = await getDocs(q);
+                if (snap.empty) return;
+                container.innerHTML = '<p style="font-size:13px; font-weight:bold; color:#666; margin-bottom:8px;">Your active listings:</p>';
+                snap.forEach((d) => {
+                    const ev = d.data();
+                    const row = document.createElement("div");
+                    row.className = "listing-row";
+                    row.innerHTML = `
+                        <span>${escapeHtml(ev.title)}</span>
+                        <button class="btn-remove" onclick="removeListing('events', '${d.id}', 'loadMyEvents')">Remove</button>
+                    `;
+                    container.appendChild(row);
+                });
+            } catch (error) { console.error(error); }
+        }
+
+        async function loadMyJobs(dentistUid) {
+            const container = document.getElementById("my-jobs-list");
+            container.innerHTML = "";
+            try {
+                const q = query(collection(db, "jobs"), where("hostId", "==", dentistUid));
+                const snap = await getDocs(q);
+                if (snap.empty) return;
+                container.innerHTML = '<p style="font-size:13px; font-weight:bold; color:#666; margin-bottom:8px;">Your active listings:</p>';
+                snap.forEach((d) => {
+                    const job = d.data();
+                    const row = document.createElement("div");
+                    row.className = "listing-row";
+                    row.innerHTML = `
+                        <span>${escapeHtml(job.title)}</span>
+                        <button class="btn-remove" onclick="removeListing('jobs', '${d.id}', 'loadMyJobs')">Remove</button>
+                    `;
+                    container.appendChild(row);
+                });
+            } catch (error) { console.error(error); }
+        }
+
+        window.removeListing = async (collectionName, docId, reloadFnName) => {
+            if (!confirm("Take this listing down? Students won't be able to see or apply to it anymore.")) return;
+            try {
+                await deleteDoc(doc(db, collectionName, docId));
+                if (reloadFnName === "loadMyEvents") loadMyEvents(currentUserId);
+                else loadMyJobs(currentUserId);
+            } catch (error) { alert("Error removing listing: " + error.message); }
+        };
 
         window.updateApplicationStatus = async (collectionName, appId, newStatus) => {
             const ref = doc(db, collectionName, appId);

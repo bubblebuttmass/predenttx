@@ -140,6 +140,12 @@
         .log-hours-row > * { flex: 1; }
         .hours-summary-row { display: flex; gap: 15px; margin-bottom: 20px; }
         @media (max-width: 600px) { .hours-summary-row { flex-direction: column; } }
+        .app-tabs { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 2px solid var(--off-white); }
+        .app-tab-btn { background: none; border: none; padding: 10px 12px; font-weight: bold; color: #888; cursor: pointer; border-bottom: 3px solid transparent; font-size: 15px; font-family: inherit; margin-bottom: -2px; }
+        .app-tab-btn.active { color: var(--primary-green); border-bottom-color: var(--primary-gold); }
+        .app-tab-btn:hover { color: var(--primary-green); }
+        .btn-remove { background-color: transparent; color: #999; border: 1px solid #ccc; padding: 4px 10px; font-size: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-remove:hover { background-color: #fceae9; color: var(--deny-red); border-color: var(--deny-red); }
         .hours-summary-box { flex: 1; background: #f5f5f5; border-radius: 8px; padding: 15px; text-align: center; }
         .hours-summary-num { display: block; font-size: 28px; font-weight: bold; color: var(--primary-green); }
         .hours-summary-label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -198,9 +204,20 @@
         </div>
 
         <div class="card-section">
-            <h2>My Shadowing Applications</h2>
+            <h2>My Applications</h2>
+            <div class="app-tabs">
+                <button class="app-tab-btn active" id="tab-shadowing">Shadowing</button>
+                <button class="app-tab-btn" id="tab-events">Event RSVPs</button>
+                <button class="app-tab-btn" id="tab-jobs">Job Applications</button>
+            </div>
             <div id="applications-container">
                 <p class="empty-message">Loading submitted requests...</p>
+            </div>
+            <div id="event-rsvps-container" style="display:none;">
+                <p class="empty-message">Loading RSVPs...</p>
+            </div>
+            <div id="job-applications-container" style="display:none;">
+                <p class="empty-message">Loading applications...</p>
             </div>
         </div>
 
@@ -244,7 +261,7 @@
     <script type="module">
         import { auth, db, uploadMedia, escapeHtml, notify } from './firebase-config.js';
         import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-        import { collection, getDocs, addDoc, doc, getDoc, setDoc, query, where } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+        import { collection, getDocs, addDoc, doc, getDoc, setDoc, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
         const applicationsContainer = document.getElementById("applications-container");
         const studentAvatar = document.getElementById("student-avatar");
@@ -309,6 +326,8 @@
             }
             loadStudentApplications(user.uid);
             loadStudentLogs(user.uid);
+            loadEventRsvps(user.uid);
+            loadJobApplications(user.uid);
         });
 
         avatarZone.addEventListener("click", () => avatarInput.click());
@@ -431,7 +450,10 @@
                                 <h3>${escapeHtml(clinicName)}</h3>
                                 <span style="font-size: 14px; color: #666;">Date Requested: <strong>${escapeHtml(request.requestedDate)}</strong></span>
                             </div>
-                            <span class="badge ${request.requestStatus}">${request.requestStatus}</span>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <span class="badge ${request.requestStatus}">${request.requestStatus}</span>
+                                <button class="btn-remove" onclick="removeApplication('shadowing_requests', '${documentSnapshot.id}')">Remove</button>
+                            </div>
                         </div>
                         ${messageSectionHTML}
                     `;
@@ -552,6 +574,100 @@
                 console.error(err);
             }
         }
+
+        // --- Applications tabs ---
+
+        const tabShadowing = document.getElementById("tab-shadowing");
+        const tabEvents = document.getElementById("tab-events");
+        const tabJobs = document.getElementById("tab-jobs");
+        const shadowingPanel = document.getElementById("applications-container");
+        const eventsPanel = document.getElementById("event-rsvps-container");
+        const jobsPanel = document.getElementById("job-applications-container");
+
+        function setActiveTab(btn, panel) {
+            [tabShadowing, tabEvents, tabJobs].forEach(b => b.classList.remove("active"));
+            [shadowingPanel, eventsPanel, jobsPanel].forEach(p => p.style.display = "none");
+            btn.classList.add("active");
+            panel.style.display = "block";
+        }
+
+        tabShadowing.addEventListener("click", () => setActiveTab(tabShadowing, shadowingPanel));
+        tabEvents.addEventListener("click", () => setActiveTab(tabEvents, eventsPanel));
+        tabJobs.addEventListener("click", () => setActiveTab(tabJobs, jobsPanel));
+
+        async function loadEventRsvps(uid) {
+            eventsPanel.innerHTML = "";
+            try {
+                const q = query(collection(db, "event_applications"), where("studentId", "==", uid));
+                const snap = await getDocs(q);
+                if (snap.empty) {
+                    eventsPanel.innerHTML = '<p class="empty-message">No event RSVPs yet.</p>';
+                    return;
+                }
+                snap.forEach((d) => {
+                    const rsvp = d.data();
+                    const card = document.createElement("div");
+                    card.className = "status-card";
+                    card.innerHTML = `
+                        <div class="status-row">
+                            <h3>${escapeHtml(rsvp.eventTitle) || "Event"}</h3>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <span class="badge ${rsvp.status}">${rsvp.status}</span>
+                                <button class="btn-remove" onclick="removeApplication('event_applications', '${d.id}')">Remove</button>
+                            </div>
+                        </div>
+                    `;
+                    eventsPanel.appendChild(card);
+                });
+            } catch (err) {
+                eventsPanel.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+            }
+        }
+
+        async function loadJobApplications(uid) {
+            jobsPanel.innerHTML = "";
+            try {
+                const q = query(collection(db, "job_applications"), where("studentId", "==", uid));
+                const snap = await getDocs(q);
+                if (snap.empty) {
+                    jobsPanel.innerHTML = '<p class="empty-message">No job applications yet.</p>';
+                    return;
+                }
+                snap.forEach((d) => {
+                    const app = d.data();
+                    const resumeNote = app.resumeUrl ? ` &middot; <a href="${escapeHtml(app.resumeUrl)}" target="_blank" rel="noopener">resume attached</a>` : "";
+                    const card = document.createElement("div");
+                    card.className = "status-card";
+                    card.innerHTML = `
+                        <div class="status-row">
+                            <div>
+                                <h3>${escapeHtml(app.jobTitle) || "Job"}</h3>
+                                <span style="font-size: 13px; color: #666;">${resumeNote}</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <span class="badge ${app.status}">${app.status}</span>
+                                <button class="btn-remove" onclick="removeApplication('job_applications', '${d.id}')">Remove</button>
+                            </div>
+                        </div>
+                    `;
+                    jobsPanel.appendChild(card);
+                });
+            } catch (err) {
+                jobsPanel.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+            }
+        }
+
+        window.removeApplication = async (collectionName, docId) => {
+            if (!confirm("Remove this from your list? This can't be undone.")) return;
+            try {
+                await deleteDoc(doc(db, collectionName, docId));
+                if (collectionName === "shadowing_requests") loadStudentApplications(currentUid);
+                else if (collectionName === "event_applications") loadEventRsvps(currentUid);
+                else if (collectionName === "job_applications") loadJobApplications(currentUid);
+            } catch (err) {
+                alert("Error removing: " + err.message);
+            }
+        };
 
         document.getElementById("logout-btn").addEventListener("click", () => {
             signOut(auth).then(() => { window.location.href = "index.html"; });

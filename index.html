@@ -351,7 +351,7 @@
                                     <strong>Contact for info/RSVP:</strong><br>
                                     ${escapeHtml(eventData.contactInfo) || ""}
                                 </div>
-                                <button class="btn-apply-listing event-flavor" onclick="openApplyModal('${docSnap.id}')">Apply / Send Resume</button>
+                                <button class="btn-apply-listing event-flavor" id="rsvp-btn-${docSnap.id}" onclick="rsvpToEvent('${docSnap.id}')">RSVP</button>
                             </div>
                         `;
                         resultsContainer.appendChild(card);
@@ -403,7 +403,7 @@
             }
         });
 
-        // --- Apply modal: shared by both Events and Jobs ---
+        // --- Apply modal: Jobs only now. Events are a one-click RSVP, no form needed. ---
 
         window.openApplyModal = (id) => {
             if (!currentUser) {
@@ -422,6 +422,36 @@
             document.getElementById("apply-modal-status").innerText = "";
             applyResumeUrl = "";
             document.getElementById("apply-modal").style.display = "flex";
+        };
+
+        window.rsvpToEvent = async (id) => {
+            if (!currentUser) {
+                alert("Please log in first to RSVP.");
+                window.location.href = "login.html";
+                return;
+            }
+            const target = listingCache[id];
+            if (!target) return;
+
+            const btn = document.getElementById(`rsvp-btn-${id}`);
+            if (btn) { btn.disabled = true; btn.innerText = "Sending RSVP..."; }
+
+            try {
+                const newAppRef = await addDoc(collection(db, "event_applications"), {
+                    hostId: target.hostId,
+                    studentId: currentUser.uid,
+                    studentEmail: currentUser.email,
+                    eventId: id,
+                    eventTitle: target.title,
+                    status: "pending",
+                    timestamp: new Date().toISOString()
+                });
+                if (btn) { btn.innerText = "RSVP Sent ✓"; }
+                notify({ type: "event_application", docId: newAppRef.id });
+            } catch (err) {
+                if (btn) { btn.disabled = false; btn.innerText = "RSVP"; }
+                alert("Error sending RSVP: " + err.message);
+            }
         };
 
         document.getElementById("apply-modal-cancel").addEventListener("click", () => {

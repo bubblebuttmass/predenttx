@@ -142,7 +142,7 @@
                 <p class="logged-in-as" id="logged-in-as-text"></p>
 
                 <label style="font-weight: bold; display: block; margin-bottom: 5px;">Preferred Date:</label>
-                <input type="date" id="requested-date">
+                <input type="date" id="requested-date" required>
 
                 <label style="font-weight: bold; display: block; margin-bottom: 5px;">Message / Introduction:</label>
                 <textarea id="student-message" rows="3" placeholder="Introduce yourself! (e.g., 'Hi, I am a junior predental student at UT Austin looking to observe root canals...')"></textarea>
@@ -244,7 +244,8 @@
         document.getElementById("apply-btn").addEventListener("click", async () => {
             const applyBtn = document.getElementById("apply-btn");
             const statusText = document.getElementById("submit-status");
-            const date = document.getElementById("requested-date").value;
+            const dateInput = document.getElementById("requested-date");
+            const date = dateInput.value;
             const message = document.getElementById("student-message").value;
 
             if (!currentUser) {
@@ -252,9 +253,8 @@
                 statusText.style.color = "red";
                 return;
             }
-            if (date === "") {
-                statusText.innerText = "Please choose a preferred date.";
-                statusText.style.color = "red";
+            if (!dateInput.checkValidity()) {
+                dateInput.reportValidity();
                 return;
             }
 
