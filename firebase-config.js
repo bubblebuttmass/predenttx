@@ -29,13 +29,49 @@ const sendNotificationEmail = httpsCallable(functions, "sendNotificationEmail");
 
 // Fire-and-forget — a failed email should never block the booking/accept/
 // decline flow it's attached to, so this never throws back to the caller.
-export async function notify({ to, subject, html }) {
+// Takes { type, requestId } — the Cloud Function looks up the real
+// recipient and builds the email content itself server-side, rather than
+// trusting whatever "to"/"subject"/"html" a client might send. This is
+// what stops any logged-in user from being able to call this function
+// directly and send arbitrary email to arbitrary addresses.
+export async function notify(payload) {
     try {
-        await sendNotificationEmail({ to, subject, html });
+        await sendNotificationEmail(payload);
     } catch (err) {
         console.error("Notification failed (non-blocking):", err);
     }
 }
+
+// Escapes user-submitted text before it gets inserted into innerHTML.
+// Every field a user typed (bios, messages, descriptions, names) must go
+// through this before being interpolated into a template literal that's
+// assigned to .innerHTML — otherwise a bio or job description containing
+// real HTML/script tags would execute in anyone else's browser who views it.
+export function escapeHtml(str) {
+    if (str === null || str === undefined) return "";
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+// App Check — verifies requests actually come from this website, not a
+// script hitting Firebase directly with a stolen auth token. To enable:
+// 1. Firebase Console -> App Check -> Apps -> register this web app with a
+//    reCAPTCHA v3 provider, and copy the site key it gives you.
+// 2. Uncomment the block below and paste the site key in.
+// 3. Once you've confirmed real traffic is generating valid App Check
+//    tokens (the App Check console shows a "verified" metric), turn on
+//    enforcement for Firestore/Storage in the console, and add
+//    `enforceAppCheck: true` to the sendNotificationEmail function config.
+//
+// import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app-check.js";
+// initializeAppCheck(app, {
+//     provider: new ReCaptchaV3Provider("YOUR_RECAPTCHA_V3_SITE_KEY"),
+//     isTokenAutoRefreshEnabled: true
+// });
 
 // Shared avatar/clinic/event image uploader -> Firebase Storage.
 // Path convention: {uid}/{prefix}-{timestamp}.{ext} — matched by storage.rules

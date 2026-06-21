@@ -4,11 +4,12 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     // Path convention: {uid}/{prefix}-{timestamp}.{ext}
-    // Anyone can view (avatars/clinic photos/event posters are public, and
-    // resume links are only ever shared with the dentist a student applied
-    // to), but only the owner of that uid folder can write into it.
+    // Avatars/clinic photos/event posters are meant to be public, so anyone
+    // can view those. Resumes are different — they're personal documents
+    // (phone number, address), so those require being logged in at minimum,
+    // rather than being readable by anyone who happens to get the link.
     match /{userId}/{fileName} {
-      allow read: if true;
+      allow read: if fileName.matches('resume-.*') ? request.auth != null : true;
       allow write: if request.auth != null
                     && request.auth.uid == userId
                     && request.resource.size < 5 * 1024 * 1024

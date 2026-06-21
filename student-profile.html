@@ -242,7 +242,7 @@
     </div>
 
     <script type="module">
-        import { auth, db, uploadMedia } from './firebase-config.js';
+        import { auth, db, uploadMedia, escapeHtml } from './firebase-config.js';
         import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
         import { collection, getDocs, addDoc, doc, getDoc, setDoc, query, where } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
@@ -413,8 +413,8 @@
                     if (request.requestStatus === "accepted") {
                         messageSectionHTML = `
                             <div class="dentist-message-box">
-                                <strong>Message & Instructions from ${doctorName}:</strong>
-                                ${request.dentistMessage || "Accepted! Please log into dashboard systems to verify hour constraints."}
+                                <strong>Message & Instructions from ${escapeHtml(doctorName)}:</strong>
+                                ${escapeHtml(request.dentistMessage) || "Accepted! Please log into dashboard systems to verify hour constraints."}
                             </div>
                         `;
                         acceptedRequestsCache.push({
@@ -428,8 +428,8 @@
                     card.innerHTML = `
                         <div class="status-row">
                             <div>
-                                <h3>${clinicName}</h3>
-                                <span style="font-size: 14px; color: #666;">Date Requested: <strong>${request.requestedDate}</strong></span>
+                                <h3>${escapeHtml(clinicName)}</h3>
+                                <span style="font-size: 14px; color: #666;">Date Requested: <strong>${escapeHtml(request.requestedDate)}</strong></span>
                             </div>
                             <span class="badge ${request.requestStatus}">${request.requestStatus}</span>
                         </div>
@@ -443,9 +443,9 @@
                         notificationItem.className = "notification-item";
 
                         if (request.requestStatus === "accepted") {
-                            notificationItem.innerHTML = `🎉 Your request for <strong>${request.requestedDate}</strong> at ${clinicName} was <strong>ACCEPTED</strong>! Check instructions.`;
+                            notificationItem.innerHTML = `🎉 Your request for <strong>${escapeHtml(request.requestedDate)}</strong> at ${escapeHtml(clinicName)} was <strong>ACCEPTED</strong>! Check instructions.`;
                         } else {
-                            notificationItem.innerHTML = `❌ Your request for <strong>${request.requestedDate}</strong> at ${clinicName} was declined.`;
+                            notificationItem.innerHTML = `❌ Your request for <strong>${escapeHtml(request.requestedDate)}</strong> at ${escapeHtml(clinicName)} was declined.`;
                         }
                         notificationListContainer.appendChild(notificationItem);
                     }
@@ -536,7 +536,7 @@
                     row.innerHTML = `
                         <span style="font-size: 14px;">
                             <span class="badge ${category}" style="margin-right: 8px; font-size: 10px; padding: 3px 8px;">${category}</span>
-                            ${log.clinicName || "Clinic"} — ${log.hours} hrs on ${log.logDate}
+                            ${escapeHtml(log.clinicName) || "Clinic"} — ${log.hours} hrs on ${escapeHtml(log.logDate)}
                         </span>
                         <span class="badge ${log.status}">${log.status}</span>
                     `;

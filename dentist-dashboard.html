@@ -248,7 +248,7 @@
     </div>
 
     <script type="module">
-        import { auth, db, notify, uploadMedia } from './firebase-config.js';
+        import { auth, db, notify, uploadMedia, escapeHtml } from './firebase-config.js';
         import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
         import { collection, getDocs, doc, updateDoc, getDoc, setDoc, addDoc, query, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
@@ -580,15 +580,15 @@
                         card.className = "request-card";
 
                         const resumeLinkHTML = request.resumeUrl
-                            ? `<p class="log-details"><a href="${request.resumeUrl}" target="_blank" rel="noopener" style="color: var(--booking-blue); font-weight: bold;">📄 View Resume</a></p>`
+                            ? `<p class="log-details"><a href="${escapeHtml(request.resumeUrl)}" target="_blank" rel="noopener" style="color: var(--booking-blue); font-weight: bold;">📄 View Resume</a></p>`
                             : "";
 
                         card.innerHTML = `
                             <div class="student-info">
-                                <h3 class="student-link-title" onclick="viewStudentProfileCard(event, '${request.studentId}')">From: ${displayName} 🔍</h3>
-                                <p class="log-details"><strong>Requested Date:</strong> ${request.requestedDate}</p>
+                                <h3 class="student-link-title" onclick="viewStudentProfileCard(event, '${request.studentId}')">From: ${escapeHtml(displayName)} 🔍</h3>
+                                <p class="log-details"><strong>Requested Date:</strong> ${escapeHtml(request.requestedDate)}</p>
                                 ${resumeLinkHTML}
-                                <p class="student-note">"${request.studentMessage || ""}"</p>
+                                <p class="student-note">"${escapeHtml(request.studentMessage) || ""}"</p>
                             </div>
                             <div class="action-buttons">
                                 <button class="btn-approve" onclick="triggerAcceptFlow('${requestId}')">✓ Accept</button>
@@ -599,7 +599,7 @@
 
                         const notificationItem = document.createElement("div");
                         notificationItem.className = "notification-item";
-                        notificationItem.innerHTML = `📅 New request for <strong>${request.requestedDate}</strong> from ${displayName}`;
+                        notificationItem.innerHTML = `📅 New request for <strong>${escapeHtml(request.requestedDate)}</strong> from ${escapeHtml(displayName)}`;
                         notificationListContainer.appendChild(notificationItem);
                     }
                 }
@@ -624,22 +624,10 @@
 
             const reqRef = doc(db, "shadowing_requests", activeTargetRequestId);
             try {
-                const reqSnap = await getDoc(reqRef);
-                const reqData = reqSnap.data();
-
                 await updateDoc(reqRef, { requestStatus: "accepted", dentistMessage: dentistNote || "Accepted! Welcome to our clinic." });
                 alert("Reservation saved successfully!");
                 loadDateRequests(currentUserId);
-
-                if (reqData?.studentEmail) {
-                    notify({
-                        to: reqData.studentEmail,
-                        subject: `Your shadowing request was accepted!`,
-                        html: `<p>Your request for <strong>${reqData.requestedDate}</strong> was <strong>accepted</strong>.</p>
-                               <p>${dentistNote ? "Instructions: " + dentistNote : ""}</p>
-                               <p>Log in to PreDentTX for full details.</p>`
-                    });
-                }
+                notify({ type: "accepted", requestId: activeTargetRequestId });
             } catch (error) { alert("Error: " + error.message); }
         });
 
@@ -647,21 +635,10 @@
             if (!confirm("Are you sure you want to decline this request?")) return;
             const reqRef = doc(db, "shadowing_requests", requestId);
             try {
-                const reqSnap = await getDoc(reqRef);
-                const reqData = reqSnap.data();
-
                 await updateDoc(reqRef, { requestStatus: "declined" });
                 alert("Reservation declined.");
                 loadDateRequests(currentUserId);
-
-                if (reqData?.studentEmail) {
-                    notify({
-                        to: reqData.studentEmail,
-                        subject: `Update on your shadowing request`,
-                        html: `<p>Your request for <strong>${reqData.requestedDate}</strong> was declined.</p>
-                               <p>Log in to PreDentTX to find other clinics.</p>`
-                    });
-                }
+                notify({ type: "declined", requestId: requestId });
             } catch (error) { alert(error.message); }
         };
 
@@ -688,8 +665,8 @@
                     card.className = "request-card";
                     card.innerHTML = `
                         <div class="student-info">
-                            <h3>From Student: ${studentLabel}</h3>
-                            <p class="log-details"><strong>Type:</strong> ${(log.category || "shadowing")} | <strong>Clinic:</strong> ${log.clinicName || ""} | <strong>Hours:</strong> ${log.hours} | <strong>Date:</strong> ${log.logDate}</p>
+                            <h3>From Student: ${escapeHtml(studentLabel)}</h3>
+                            <p class="log-details"><strong>Type:</strong> ${escapeHtml(log.category || "shadowing")} | <strong>Clinic:</strong> ${escapeHtml(log.clinicName) || ""} | <strong>Hours:</strong> ${log.hours} | <strong>Date:</strong> ${escapeHtml(log.logDate)}</p>
                         </div>
                         <div class="action-buttons">
                             <button class="btn-approve" onclick="updateLogStatus('${logId}', 'approved')">✓ Approve</button>

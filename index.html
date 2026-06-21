@@ -143,7 +143,7 @@
     </div>
 
     <script type="module">
-        import { auth, db } from './firebase-config.js';
+        import { auth, db, escapeHtml } from './firebase-config.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
         import { collection, query, where, orderBy, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
@@ -238,15 +238,15 @@
                         const avatarImage = clinic.doctorProfilePic || `https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=${docSnap.id}`;
 
                         card.innerHTML = `
-                            <div style="background-image: url('${clinicImage}'); background-size: cover; background-position: center; height: 150px; border-radius: 6px; margin-bottom: 15px;"></div>
+                            <div style="background-image: url('${escapeHtml(clinicImage)}'); background-size: cover; background-position: center; height: 150px; border-radius: 6px; margin-bottom: 15px;"></div>
                             <div class="doctor-identity-row">
-                                <img class="doctor-avatar" src="${avatarImage}" alt="Doctor Profile">
+                                <img class="doctor-avatar" src="${escapeHtml(avatarImage)}" alt="Doctor Profile">
                                 <div class="doctor-meta-text">
-                                    <h3>${clinic.clinicName || ""}</h3>
-                                    <span class="clinic-specialty">${clinic.doctorName || ""} | ${clinic.specialty || ""}</span>
+                                    <h3>${escapeHtml(clinic.clinicName) || ""}</h3>
+                                    <span class="clinic-specialty">${escapeHtml(clinic.doctorName) || ""} | ${escapeHtml(clinic.specialty) || ""}</span>
                                 </div>
                             </div>
-                            <p class="clinic-reqs"><strong>Requirements:</strong> ${clinic.requirements || "Contact clinic for details."}</p>
+                            <p class="clinic-reqs"><strong>Requirements:</strong> ${escapeHtml(clinic.requirements) || "Contact clinic for details."}</p>
                             <a href="dentist-profile.html?id=${docSnap.id}" class="btn-view-profile">View Shadowing Schedule</a>
                         `;
                         resultsContainer.appendChild(card);
@@ -285,19 +285,19 @@
                         });
 
                         card.innerHTML = `
-                            <div style="background-image: url('${eventImage}'); background-size: cover; background-position: center; height: 150px; border-radius: 6px; margin-bottom: 10px;"></div>
+                            <div style="background-image: url('${escapeHtml(eventImage)}'); background-size: cover; background-position: center; height: 150px; border-radius: 6px; margin-bottom: 10px;"></div>
                             <div>
                                 <span class="event-badge">Community Event</span>
-                                <h3 style="margin-bottom: 5px; color: var(--primary-green);">${eventData.title}</h3>
-                                <p style="font-size: 13px; color: #888; margin: 0 0 10px 0;">Hosted by: <strong>${eventData.hostName || ""}</strong></p>
+                                <h3 style="margin-bottom: 5px; color: var(--primary-green);">${escapeHtml(eventData.title)}</h3>
+                                <p style="font-size: 13px; color: #888; margin: 0 0 10px 0;">Hosted by: <strong>${escapeHtml(eventData.hostName) || ""}</strong></p>
 
                                 <p class="event-detail">📅 <strong>Date/Time:</strong> ${formattedDate}</p>
-                                <p class="event-detail">📍 <strong>Location:</strong> ${eventData.location || ""}</p>
-                                <p style="font-size: 14px; color: #444; margin-top: 10px; line-height: 1.4;">${eventData.description || ""}</p>
+                                <p class="event-detail">📍 <strong>Location:</strong> ${escapeHtml(eventData.location) || ""}</p>
+                                <p style="font-size: 14px; color: #444; margin-top: 10px; line-height: 1.4;">${escapeHtml(eventData.description) || ""}</p>
 
                                 <div class="event-contact-box">
                                     <strong>Contact for info/RSVP:</strong><br>
-                                    ${eventData.contactInfo || ""}
+                                    ${escapeHtml(eventData.contactInfo) || ""}
                                 </div>
                             </div>
                         `;
@@ -325,17 +325,17 @@
 
                         card.innerHTML = `
                             <div>
-                                <span class="job-badge">${job.jobType || "Paid Position"}</span>
-                                <h3 style="margin-bottom: 5px; color: var(--primary-green);">${job.title}</h3>
-                                <p style="font-size: 13px; color: #888; margin: 0 0 10px 0;">Hiring at: <strong>${job.hostName || ""}</strong></p>
+                                <span class="job-badge">${escapeHtml(job.jobType) || "Paid Position"}</span>
+                                <h3 style="margin-bottom: 5px; color: var(--primary-green);">${escapeHtml(job.title)}</h3>
+                                <p style="font-size: 13px; color: #888; margin: 0 0 10px 0;">Hiring at: <strong>${escapeHtml(job.hostName) || ""}</strong></p>
 
-                                ${job.payRate ? `<p class="event-detail">💵 <strong>Pay:</strong> ${job.payRate}</p>` : ""}
-                                <p class="event-detail">📍 <strong>Location:</strong> ${job.location || ""}</p>
-                                <p style="font-size: 14px; color: #444; margin-top: 10px; line-height: 1.4;">${job.description || ""}</p>
+                                ${job.payRate ? `<p class="event-detail">💵 <strong>Pay:</strong> ${escapeHtml(job.payRate)}</p>` : ""}
+                                <p class="event-detail">📍 <strong>Location:</strong> ${escapeHtml(job.location) || ""}</p>
+                                <p style="font-size: 14px; color: #444; margin-top: 10px; line-height: 1.4;">${escapeHtml(job.description) || ""}</p>
 
                                 <div class="event-contact-box job-contact-box">
                                     <strong>How to Apply:</strong><br>
-                                    ${job.contactInfo || ""}
+                                    ${escapeHtml(job.contactInfo) || ""}
                                 </div>
                             </div>
                         `;
