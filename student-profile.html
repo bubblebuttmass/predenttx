@@ -242,7 +242,7 @@
     </div>
 
     <script type="module">
-        import { auth, db, uploadMedia, escapeHtml } from './firebase-config.js';
+        import { auth, db, uploadMedia, escapeHtml, notify } from './firebase-config.js';
         import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
         import { collection, getDocs, addDoc, doc, getDoc, setDoc, query, where } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
@@ -491,8 +491,9 @@
             status.innerText = "Submitting...";
 
             try {
-                await addDoc(collection(db, "shadowing_logs"), {
+                const newLogRef = await addDoc(collection(db, "shadowing_logs"), {
                     studentId: currentUid,
+                    studentEmail: currentStudentEmail,
                     dentistId: matchedRequest.dentistId,
                     clinicName: matchedRequest.clinicName,
                     category,
@@ -505,6 +506,7 @@
                 document.getElementById("log-date").value = "";
                 document.getElementById("log-hours").value = "";
                 loadStudentLogs(currentUid);
+                notify({ type: "hours_logged", docId: newLogRef.id });
             } catch (err) {
                 status.style.color = "red";
                 status.innerText = "Error: " + err.message;

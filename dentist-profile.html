@@ -285,7 +285,7 @@
                 document.getElementById("resume-status").innerText = "";
                 resumeUrl = "";
 
-                notify({ type: "new_request", requestId: newReqRef.id });
+                notify({ type: "new_request", docId: newReqRef.id });
             } catch (error) {
                 statusText.innerText = "Error sending request: " + error.message;
                 statusText.style.color = "red";

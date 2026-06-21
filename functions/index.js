@@ -1,16 +1,19 @@
 // functions/index.js
 //
-// One callable function, invoked right after a relevant Firestore write
-// (new request -> email the dentist, accept/decline -> email the student).
+// One callable function that handles every email notification in the app —
+// shadowing requests, logged hours, and event/job applications, in both
+// directions (student -> host, and host -> student).
 //
-// SECURITY NOTE: this function does NOT trust a client-supplied
-// to/subject/html. It only accepts a { type, requestId } pair, then uses
-// the Admin SDK to read the actual shadowing_requests document and verify
-// the caller is genuinely a participant in it (the student who created it,
-// or the dentist it was sent to) before deciding who to email and what to
-// say. This is what stops any logged-in user from calling this function
-// directly to send arbitrary email to arbitrary addresses "from" your
-// verified domain.
+// SECURITY NOTE: this function does NOT trust a client-supplied recipient
+// or message. The client only ever sends { type, docId }. "type" is looked
+// up against a fixed whitelist (NOTIFICATION_CONFIG below) that's baked
+// into this server code, not provided by the client — so a client can't
+// invent a new type or point an existing type at a different collection.
+// For each request, the function reads the real Firestore document with
+// the Admin SDK, verifies the caller is genuinely the student or host on
+// that specific record, and only then builds the email and sends it. This
+// is what stops any logged-in user from using this function to email
+// someone they have no real relationship to.
 //
 // Setup (requires the Blaze plan, already enabled):
 //   cd functions && npm install
@@ -32,9 +35,9 @@ const db = admin.firestore();
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 const FROM_EMAIL = "PreDentTX <notifications@predenttx.com>"; // requires predenttx.com to be verified in Resend (Domains tab)
 
-// Same escaping rule as the client: any text a user typed (their message,
-// the dentist's note) gets escaped before it's embedded in an HTML email,
-// so it can't be used to inject markup into the email body.
+// Any text a user typed (a message, a clinic name, a job title) gets
+// escaped before it's embedded in an HTML email, so it can't be used to
+// inject markup into the email body.
 function escapeHtml(str) {
   if (str === null || str === undefined) return "";
   return String(str)
@@ -65,88 +68,131 @@ async function sendViaResend(to, subject, html) {
   return data;
 }
 
+// Every notification type the app can trigger. "collection" is which
+// Firestore collection docId refers to. "hostField" is the field name that
+// holds the dentist/host's uid on that collection (it's "dentistId" on the
+// older shadowing collections, "hostId" on the newer event/job ones).
+// "direction" controls which side is allowed to trigger it and which side
+// receives it: studentToHost means only the student on the doc can call
+// it, and it goes to the host's email; hostToStudent is the reverse.
+const NOTIFICATION_CONFIG = {
+  new_request: {
+    collection: "shadowing_requests", hostField: "dentistId", direction: "studentToHost",
+    subject: (d) => `New shadowing request — ${escapeHtml(d.requestedDate)}`,
+    body: (d) => `<p><strong>${escapeHtml(d.studentEmail)}</strong> requested to shadow on <strong>${escapeHtml(d.requestedDate)}</strong>.</p>
+                  <p>Message: ${escapeHtml(d.studentMessage) || "(none)"}</p>
+                  <p>Log in to PreDentTX to accept or decline.</p>`
+  },
+  accepted: {
+    collection: "shadowing_requests", hostField: "dentistId", direction: "hostToStudent",
+    subject: () => "Your shadowing request was accepted!",
+    body: (d) => `<p>Your request for <strong>${escapeHtml(d.requestedDate)}</strong> was <strong>accepted</strong>.</p>
+                  <p>${d.dentistMessage ? "Instructions: " + escapeHtml(d.dentistMessage) : ""}</p>
+                  <p>Log in to PreDentTX for full details.</p>`
+  },
+  declined: {
+    collection: "shadowing_requests", hostField: "dentistId", direction: "hostToStudent",
+    subject: () => "Update on your shadowing request",
+    body: (d) => `<p>Your request for <strong>${escapeHtml(d.requestedDate)}</strong> was declined.</p>
+                  <p>Log in to PreDentTX to find other clinics.</p>`
+  },
+  hours_logged: {
+    collection: "shadowing_logs", hostField: "dentistId", direction: "studentToHost",
+    subject: (d) => `Hours submitted for review — ${escapeHtml(d.clinicName) || "your clinic"}`,
+    body: (d) => `<p><strong>${escapeHtml(d.studentEmail)}</strong> logged <strong>${d.hours}</strong> ${escapeHtml(d.category || "shadowing")} hours on ${escapeHtml(d.logDate)}.</p>
+                  <p>Log in to PreDentTX to approve or deny.</p>`
+  },
+  hours_approved: {
+    collection: "shadowing_logs", hostField: "dentistId", direction: "hostToStudent",
+    subject: () => "Your logged hours were approved",
+    body: (d) => `<p>Your <strong>${d.hours}</strong> ${escapeHtml(d.category || "shadowing")} hours on ${escapeHtml(d.logDate)} at ${escapeHtml(d.clinicName) || "the clinic"} were approved.</p>`
+  },
+  hours_denied: {
+    collection: "shadowing_logs", hostField: "dentistId", direction: "hostToStudent",
+    subject: () => "Update on your logged hours",
+    body: (d) => `<p>Your <strong>${d.hours}</strong> ${escapeHtml(d.category || "shadowing")} hours on ${escapeHtml(d.logDate)} at ${escapeHtml(d.clinicName) || "the clinic"} were not approved this time. Log in to PreDentTX for details.</p>`
+  },
+  event_application: {
+    collection: "event_applications", hostField: "hostId", direction: "studentToHost",
+    subject: (d) => `New application — ${escapeHtml(d.eventTitle) || "your event"}`,
+    body: (d) => `<p><strong>${escapeHtml(d.studentEmail)}</strong> applied to <strong>${escapeHtml(d.eventTitle)}</strong>.</p>
+                  <p>Message: ${escapeHtml(d.message) || "(none)"}</p>
+                  <p>Log in to PreDentTX to review.</p>`
+  },
+  event_application_accepted: {
+    collection: "event_applications", hostField: "hostId", direction: "hostToStudent",
+    subject: (d) => `Your application was accepted — ${escapeHtml(d.eventTitle) || ""}`,
+    body: (d) => `<p>Your application to <strong>${escapeHtml(d.eventTitle)}</strong> was accepted. Log in to PreDentTX for details.</p>`
+  },
+  event_application_declined: {
+    collection: "event_applications", hostField: "hostId", direction: "hostToStudent",
+    subject: (d) => `Update on your application — ${escapeHtml(d.eventTitle) || ""}`,
+    body: (d) => `<p>Your application to <strong>${escapeHtml(d.eventTitle)}</strong> was declined.</p>`
+  },
+  job_application: {
+    collection: "job_applications", hostField: "hostId", direction: "studentToHost",
+    subject: (d) => `New applicant — ${escapeHtml(d.jobTitle) || "your job listing"}`,
+    body: (d) => `<p><strong>${escapeHtml(d.studentEmail)}</strong> applied for <strong>${escapeHtml(d.jobTitle)}</strong>.</p>
+                  <p>Message: ${escapeHtml(d.message) || "(none)"}</p>
+                  <p>Log in to PreDentTX to review.</p>`
+  },
+  job_application_accepted: {
+    collection: "job_applications", hostField: "hostId", direction: "hostToStudent",
+    subject: (d) => `Good news about your application — ${escapeHtml(d.jobTitle) || ""}`,
+    body: (d) => `<p>Your application for <strong>${escapeHtml(d.jobTitle)}</strong> was accepted. Log in to PreDentTX for details.</p>`
+  },
+  job_application_declined: {
+    collection: "job_applications", hostField: "hostId", direction: "hostToStudent",
+    subject: (d) => `Update on your application — ${escapeHtml(d.jobTitle) || ""}`,
+    body: (d) => `<p>Your application for <strong>${escapeHtml(d.jobTitle)}</strong> was declined.</p>`
+  },
+};
+
 exports.sendNotificationEmail = onCall({ secrets: [RESEND_API_KEY] }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be signed in to trigger a notification.");
   }
 
   const callerUid = request.auth.uid;
-  const { type, requestId } = request.data || {};
+  const { type, docId } = request.data || {};
+  const config = NOTIFICATION_CONFIG[type];
 
-  if (!type || !requestId) {
-    throw new HttpsError("invalid-argument", "Missing type/requestId.");
+  if (!config || !docId) {
+    console.error(`[sendNotificationEmail] Invalid request: type=${type} docId=${docId}`);
+    throw new HttpsError("invalid-argument", "Missing or unknown type/docId.");
   }
 
-  const reqSnap = await db.collection("shadowing_requests").doc(requestId).get();
-  if (!reqSnap.exists) {
-    console.error(`[sendNotificationEmail] Request not found: ${requestId}`);
-    throw new HttpsError("not-found", "Request not found.");
+  const docSnap = await db.collection(config.collection).doc(docId).get();
+  if (!docSnap.exists) {
+    console.error(`[sendNotificationEmail] ${config.collection}/${docId} not found`);
+    throw new HttpsError("not-found", "Record not found.");
   }
-  const reqData = reqSnap.data();
-  const safeDate = escapeHtml(reqData.requestedDate);
+  const d = docSnap.data();
+  const hostId = d[config.hostField];
 
-  console.log(`[sendNotificationEmail] type=${type} requestId=${requestId} callerUid=${callerUid}`);
-
-  if (type === "new_request") {
-    // Only the student who actually owns this request can trigger this —
-    // and it only ever goes to the real dentist on that same request.
-    if (reqData.studentId !== callerUid) {
-      console.error(`[sendNotificationEmail] permission-denied: caller=${callerUid} studentId=${reqData.studentId}`);
-      throw new HttpsError("permission-denied", "Not authorized for this request.");
+  let recipientEmail;
+  if (config.direction === "studentToHost") {
+    if (d.studentId !== callerUid) {
+      console.error(`[sendNotificationEmail] permission-denied (studentToHost): caller=${callerUid} studentId=${d.studentId}`);
+      throw new HttpsError("permission-denied", "Not authorized for this record.");
     }
-
-    const dentistSnap = await db.collection("users").doc(reqData.dentistId).get();
-    const dentistEmail = dentistSnap.exists ? dentistSnap.data().email : null;
-    if (!dentistEmail) {
-      console.error(`[sendNotificationEmail] Dentist email not found for dentistId=${reqData.dentistId}, dentistDoc exists=${dentistSnap.exists}`);
-      throw new HttpsError("not-found", "Dentist email not found.");
+    const hostSnap = await db.collection("users").doc(hostId).get();
+    recipientEmail = hostSnap.exists ? hostSnap.data().email : null;
+  } else {
+    if (hostId !== callerUid) {
+      console.error(`[sendNotificationEmail] permission-denied (hostToStudent): caller=${callerUid} hostId=${hostId}`);
+      throw new HttpsError("permission-denied", "Not authorized for this record.");
     }
-
-    console.log(`[sendNotificationEmail] Sending new_request email to ${dentistEmail}`);
-    const result = await sendViaResend(
-      dentistEmail,
-      `New shadowing request — ${safeDate}`,
-      `<p><strong>${escapeHtml(reqData.studentEmail)}</strong> requested to shadow on <strong>${safeDate}</strong>.</p>
-       <p>Message: ${escapeHtml(reqData.studentMessage) || "(none)"}</p>
-       <p>Log in to PreDentTX to accept or decline.</p>`
-    );
-    console.log(`[sendNotificationEmail] Resend response: ${JSON.stringify(result)}`);
-    return result;
+    recipientEmail = d.studentEmail;
   }
 
-  if (type === "accepted" || type === "declined") {
-    // Only the dentist who actually owns this request can trigger this —
-    // and it only ever goes to the real student on that same request.
-    if (reqData.dentistId !== callerUid) {
-      console.error(`[sendNotificationEmail] permission-denied: caller=${callerUid} dentistId=${reqData.dentistId}`);
-      throw new HttpsError("permission-denied", "Not authorized for this request.");
-    }
-
-    const studentEmail = reqData.studentEmail;
-    if (!studentEmail) {
-      console.error(`[sendNotificationEmail] Student email missing on request ${requestId}`);
-      throw new HttpsError("not-found", "Student email not found.");
-    }
-
-    console.log(`[sendNotificationEmail] Sending ${type} email to ${studentEmail}`);
-
-    if (type === "accepted") {
-      return sendViaResend(
-        studentEmail,
-        "Your shadowing request was accepted!",
-        `<p>Your request for <strong>${safeDate}</strong> was <strong>accepted</strong>.</p>
-         <p>${reqData.dentistMessage ? "Instructions: " + escapeHtml(reqData.dentistMessage) : ""}</p>
-         <p>Log in to PreDentTX for full details.</p>`
-      );
-    }
-
-    return sendViaResend(
-      studentEmail,
-      "Update on your shadowing request",
-      `<p>Your request for <strong>${safeDate}</strong> was declined.</p>
-       <p>Log in to PreDentTX to find other clinics.</p>`
-    );
+  if (!recipientEmail) {
+    console.error(`[sendNotificationEmail] No recipient email found for type=${type} doc=${config.collection}/${docId}`);
+    throw new HttpsError("not-found", "Recipient email not found.");
   }
 
-  throw new HttpsError("invalid-argument", "Unknown notification type.");
+  console.log(`[sendNotificationEmail] type=${type} doc=${config.collection}/${docId} -> ${recipientEmail}`);
+  const result = await sendViaResend(recipientEmail, config.subject(d), config.body(d));
+  console.log(`[sendNotificationEmail] Resend response: ${JSON.stringify(result)}`);
+  return result;
 });

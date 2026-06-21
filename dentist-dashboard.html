@@ -643,7 +643,7 @@
                 await updateDoc(reqRef, { requestStatus: "accepted", dentistMessage: dentistNote || "Accepted! Welcome to our clinic." });
                 alert("Reservation saved successfully!");
                 loadDateRequests(currentUserId);
-                notify({ type: "accepted", requestId: activeTargetRequestId });
+                notify({ type: "accepted", docId: activeTargetRequestId });
             } catch (error) { alert("Error: " + error.message); }
         });
 
@@ -654,7 +654,7 @@
                 await updateDoc(reqRef, { requestStatus: "declined" });
                 alert("Reservation declined.");
                 loadDateRequests(currentUserId);
-                notify({ type: "declined", requestId: requestId });
+                notify({ type: "declined", docId: requestId });
             } catch (error) { alert(error.message); }
         };
 
@@ -701,6 +701,7 @@
                 await updateDoc(logRef, { status: newStatus });
                 alert(`Log updated!`);
                 loadPendingLogs(currentUserId);
+                notify({ type: newStatus === "approved" ? "hours_approved" : "hours_denied", docId: logId });
             } catch (error) { alert(error.message); }
         };
 
@@ -763,8 +764,13 @@
             try {
                 await updateDoc(ref, { status: newStatus });
                 alert(newStatus === "accepted" ? "Application accepted!" : "Application declined.");
-                if (collectionName === "event_applications") loadEventApplications(currentUserId);
-                else loadJobApplications(currentUserId);
+                if (collectionName === "event_applications") {
+                    loadEventApplications(currentUserId);
+                    notify({ type: newStatus === "accepted" ? "event_application_accepted" : "event_application_declined", docId: appId });
+                } else {
+                    loadJobApplications(currentUserId);
+                    notify({ type: newStatus === "accepted" ? "job_application_accepted" : "job_application_declined", docId: appId });
+                }
             } catch (error) { alert(error.message); }
         };
 

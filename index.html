@@ -187,7 +187,7 @@
     </div>
 
     <script type="module">
-        import { auth, db, escapeHtml, uploadMedia } from './firebase-config.js';
+        import { auth, db, escapeHtml, uploadMedia, notify } from './firebase-config.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
         import { collection, query, where, orderBy, getDocs, doc, getDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
@@ -482,9 +482,10 @@
             }
 
             try {
-                await addDoc(collection(db, collectionName), payload);
+                const newAppRef = await addDoc(collection(db, collectionName), payload);
                 statusEl.innerText = "Application sent!";
                 setTimeout(() => { document.getElementById("apply-modal").style.display = "none"; }, 1200);
+                notify({ type: activeApplyTarget.type === "event" ? "event_application" : "job_application", docId: newAppRef.id });
             } catch (err) {
                 statusEl.style.color = "red";
                 statusEl.innerText = "Error: " + err.message;
