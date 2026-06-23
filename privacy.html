@@ -1,0 +1,328 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PreDentTX | Privacy Policy & Terms of Service</title>
+    <style>
+        :root {
+            --primary-green: #0A5C36;
+            --primary-gold: #D4AF37;
+            --off-white: #F8F9FA;
+            --dark-text: #333333;
+            --card-bg: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 0;
+            background-color: var(--off-white);
+            color: var(--dark-text);
+        }
+
+        header {
+            background-color: var(--primary-green);
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo { color: var(--primary-gold); font-size: 28px; font-weight: bold; text-decoration: none; }
+        .nav-links a { color: white; text-decoration: none; font-weight: bold; }
+
+        .page-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 0 20px 80px 20px;
+        }
+
+        .page-header {
+            margin-bottom: 40px;
+            border-bottom: 3px solid var(--primary-gold);
+            padding-bottom: 20px;
+        }
+
+        .page-header h1 {
+            color: var(--primary-green);
+            font-size: 32px;
+            margin: 0 0 8px 0;
+        }
+
+        .page-header p {
+            color: #666;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .tab-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 35px;
+        }
+
+        .tab-btn {
+            padding: 10px 24px;
+            border: 2px solid var(--primary-green);
+            border-radius: 30px;
+            background: none;
+            color: var(--primary-green);
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--primary-green);
+            color: white;
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: #eaf2ee;
+        }
+
+        .doc-section { display: none; }
+        .doc-section.active { display: block; }
+
+        h2 {
+            color: var(--primary-green);
+            font-size: 20px;
+            margin: 35px 0 10px 0;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        h2:first-of-type { margin-top: 0; }
+
+        p {
+            line-height: 1.8;
+            color: #444;
+            margin: 0 0 14px 0;
+            font-size: 15px;
+        }
+
+        ul {
+            padding-left: 20px;
+            margin: 0 0 14px 0;
+        }
+
+        ul li {
+            line-height: 1.8;
+            color: #444;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .highlight-box {
+            background: #eaf2ee;
+            border-left: 4px solid var(--primary-green);
+            padding: 16px 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+
+        .highlight-box p {
+            margin: 0;
+            color: var(--primary-green);
+            font-weight: bold;
+        }
+
+        .contact-box {
+            background: var(--card-bg);
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px 24px;
+            margin-top: 40px;
+        }
+
+        .contact-box h3 {
+            color: var(--primary-green);
+            margin: 0 0 8px 0;
+        }
+
+        .contact-box a {
+            color: var(--primary-green);
+            font-weight: bold;
+        }
+
+        footer {
+            background-color: var(--primary-green);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 13px;
+        }
+
+        footer a { color: var(--primary-gold); text-decoration: none; margin: 0 10px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="index.html" class="logo">PreDentTX</a>
+        <div class="nav-links"><a href="index.html">Back to Home</a></div>
+    </header>
+
+    <div class="page-container">
+
+        <div class="page-header">
+            <h1>Legal</h1>
+            <p>Last updated: June 2026</p>
+        </div>
+
+        <div class="tab-row">
+            <button class="tab-btn active" onclick="showTab('privacy', this)">Privacy Policy</button>
+            <button class="tab-btn" onclick="showTab('terms', this)">Terms of Service</button>
+        </div>
+
+        <div class="doc-section active" id="privacy">
+
+            <div class="highlight-box">
+                <p>PreDentTX does not sell, rent, or share your personal information with advertisers or third parties for marketing purposes — ever.</p>
+            </div>
+
+            <h2>What we collect</h2>
+            <p>When you create an account or use PreDentTX, we collect the following information:</p>
+            <ul>
+                <li>Your email address and password (stored securely via Firebase Authentication)</li>
+                <li>Your role on the platform — predental student or dentist</li>
+                <li>Profile information you voluntarily provide: name, school, university, biography, and profile photo</li>
+                <li>For dentists: clinic name, address, specialty, shadowing requirements, and clinic photos</li>
+                <li>Shadowing requests, hour logs, event RSVPs, and job applications you submit</li>
+                <li>Resumes you upload when applying to positions</li>
+            </ul>
+
+            <h2>How we use your information</h2>
+            <p>We use your information solely to operate the PreDentTX platform:</p>
+            <ul>
+                <li>To connect predental students with dental clinics offering shadowing opportunities</li>
+                <li>To send email notifications about your requests, applications, and hour verifications</li>
+                <li>To display your profile to relevant parties (e.g., your student profile is visible to dentists you request from)</li>
+                <li>To maintain your hour log and track approved shadowing, volunteering, and paid hours</li>
+                <li>To improve the platform and fix technical issues</li>
+            </ul>
+
+            <h2>Who can see your information</h2>
+            <p>PreDentTX is designed so that your data is only visible to people you directly interact with:</p>
+            <ul>
+                <li>Dentist profiles and clinic listings are publicly visible to anyone who visits the site</li>
+                <li>Your student profile (name, school, bio, photo) is visible to dentists whose clinics you apply to or request from</li>
+                <li>Resumes you upload are accessible only to the dentist you submitted them to</li>
+                <li>Your shadowing requests and hour logs are only visible to you and the specific dentist involved</li>
+                <li>We do not display your email address publicly</li>
+            </ul>
+
+            <h2>Data storage and security</h2>
+            <p>All data is stored in Google Firebase — a secure, SOC 2 compliant cloud platform. Passwords are never stored in plain text. Files and resumes are stored in Firebase Storage with access controls that restrict who can view them. We use industry-standard HTTPS encryption for all data in transit.</p>
+
+            <h2>Email communications</h2>
+            <p>PreDentTX sends transactional emails (via Resend) to notify you of activity on the platform — such as when a shadowing request is accepted or declined, or when your hours are verified. These are not marketing emails. You will only receive emails directly related to your activity on the platform.</p>
+
+            <h2>Your rights</h2>
+            <p>You have the right to:</p>
+            <ul>
+                <li>Access the personal information we hold about you</li>
+                <li>Request correction of inaccurate information</li>
+                <li>Request deletion of your account and associated data</li>
+                <li>Withdraw from the platform at any time</li>
+            </ul>
+            <p>To exercise any of these rights, contact us at the address below.</p>
+
+            <h2>Children's privacy</h2>
+            <p>PreDentTX is intended for users 18 years of age or older. We do not knowingly collect personal information from anyone under 18. If you believe a minor has created an account, please contact us so we can remove it promptly.</p>
+
+            <h2>Changes to this policy</h2>
+            <p>We may update this Privacy Policy from time to time. When we do, we will update the "Last updated" date at the top of this page. Continued use of the platform after changes constitutes acceptance of the updated policy.</p>
+
+            <div class="contact-box">
+                <h3>Questions about your privacy?</h3>
+                <p style="margin: 0; color: #444;">Contact us at <a href="mailto:notifications@predenttx.com">notifications@predenttx.com</a>. We typically respond within 2 business days.</p>
+            </div>
+
+        </div>
+
+        <div class="doc-section" id="terms">
+
+            <div class="highlight-box">
+                <p>By creating an account on PreDentTX, you agree to these Terms of Service. Please read them carefully.</p>
+            </div>
+
+            <h2>About PreDentTX</h2>
+            <p>PreDentTX is an online platform that connects Texas predental students with licensed dental professionals offering shadowing opportunities, community events, and job listings. We are not a staffing agency and do not guarantee placement, employment, or any specific number of shadowing hours.</p>
+
+            <h2>Eligibility</h2>
+            <p>You must be at least 18 years old to use PreDentTX. By creating an account, you represent that you are at least 18 years of age. Dentists who create clinic profiles represent that they are licensed dental professionals in the state of Texas.</p>
+
+            <h2>Your account</h2>
+            <p>You are responsible for maintaining the security of your account and password. You agree not to share your login credentials with anyone else. You are responsible for all activity that occurs under your account. If you believe your account has been compromised, contact us immediately.</p>
+
+            <h2>Acceptable use</h2>
+            <p>You agree to use PreDentTX only for its intended purpose — connecting predental students with dental professionals. You agree not to:</p>
+            <ul>
+                <li>Post false, misleading, or fraudulent information about yourself or your clinic</li>
+                <li>Harass, threaten, or discriminate against any other user</li>
+                <li>Use the platform to solicit money or payment outside of legitimate posted job listings</li>
+                <li>Attempt to access another user's account or data</li>
+                <li>Use automated tools, bots, or scrapers on the platform</li>
+                <li>Post content that is illegal, defamatory, obscene, or violates any third-party rights</li>
+            </ul>
+
+            <h2>Shadowing arrangements</h2>
+            <p>PreDentTX facilitates connections between students and dentists but is not a party to any shadowing arrangement. Any agreement regarding shadowing — including dates, hours, requirements, and conduct expectations — is solely between the student and the dental professional. PreDentTX is not responsible for the conduct of any user during a shadowing experience.</p>
+
+            <h2>Hour logging and verification</h2>
+            <p>Hours submitted through PreDentTX are for personal tracking purposes only. PreDentTX does not certify, guarantee, or formally verify hours for dental school applications. It is the student's responsibility to obtain official documentation directly from the dental professional if required by their application.</p>
+
+            <h2>Content you post</h2>
+            <p>By posting content on PreDentTX — including profile information, clinic descriptions, photos, and resumes — you grant PreDentTX a non-exclusive, royalty-free license to display that content on the platform for its intended purpose. You retain ownership of your content. You represent that any content you post does not violate any third-party rights.</p>
+
+            <h2>Disclaimer of warranties</h2>
+            <p>PreDentTX is provided "as is" without warranties of any kind, express or implied. We do not warrant that the platform will be uninterrupted, error-free, or free of harmful components. We do not verify the credentials, qualifications, or background of any user — students or dentists are responsible for their own due diligence.</p>
+
+            <h2>Limitation of liability</h2>
+            <p>To the fullest extent permitted by law, PreDentTX and its operators shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the platform, including but not limited to loss of data, injury during a shadowing experience, or disputes between users.</p>
+
+            <h2>Termination</h2>
+            <p>We reserve the right to suspend or terminate any account at any time, without notice, if we determine that a user has violated these Terms or engaged in conduct harmful to other users or the platform. You may also delete your account at any time by contacting us.</p>
+
+            <h2>Governing law</h2>
+            <p>These Terms are governed by the laws of the State of Texas. Any disputes arising from these Terms or your use of PreDentTX shall be resolved in the courts of Texas.</p>
+
+            <h2>Changes to these terms</h2>
+            <p>We may update these Terms of Service from time to time. Continued use of the platform after changes are posted constitutes your acceptance of the updated Terms.</p>
+
+            <div class="contact-box">
+                <h3>Questions about these terms?</h3>
+                <p style="margin: 0; color: #444;">Contact us at <a href="mailto:notifications@predenttx.com">notifications@predenttx.com</a>.</p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <footer>
+        <p style="margin: 0 0 8px 0;">© 2026 PreDentTX. All rights reserved.</p>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="privacy.html#terms">Terms of Service</a>
+        <a href="index.html">Home</a>
+    </footer>
+
+    <script>
+        function showTab(tab, btn) {
+            document.querySelectorAll('.doc-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        if (window.location.hash === '#terms') {
+            document.querySelectorAll('.tab-btn')[0].classList.remove('active');
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            document.getElementById('privacy').classList.remove('active');
+            document.getElementById('terms').classList.add('active');
+        }
+    </script>
+
+</body>
+</html>
