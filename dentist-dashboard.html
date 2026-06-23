@@ -150,7 +150,9 @@
             </select>
             <input type="text" id="profile-city" placeholder="City">
             <input type="text" id="profile-address" placeholder="Street Address (e.g., 123 Main St, Suite 200)">
-            <textarea id="profile-requirements" rows="2" placeholder="Shadowing Requirements"></textarea>
+            <textarea id="profile-requirements" rows="2" placeholder="Shadowing Requirements (e.g., HIPAA training, closed-toe shoes, background check)"></textarea>
+            <input type="text" id="profile-min-gpa" placeholder="Minimum GPA (optional, e.g. 3.0) — leave blank if no minimum">
+            <textarea id="profile-prerequisites" rows="2" placeholder="Prerequisite Courses (optional, e.g. BIO 101, CHEM 101, no requirements needed)"></textarea>
             <label style="font-weight: bold; display: block; margin-bottom: 5px;">Clinic Showcase Photo:</label>
             <div class="upload-drop-zone" id="drop-zone">
                 <p id="upload-prompt" style="margin: 0; color: #555;">Drag & drop clinic photo here, or <strong>click to browse files</strong></p>
@@ -444,6 +446,8 @@
                 document.getElementById("profile-city").value = data.city || "";
                 document.getElementById("profile-address").value = data.address || "";
                 document.getElementById("profile-requirements").value = data.requirements || "";
+                document.getElementById("profile-min-gpa").value = data.minGPA || "";
+                document.getElementById("profile-prerequisites").value = data.prerequisites || "";
 
                 if (data.clinicImage) { clinicImageString = data.clinicImage; previewImg.src = clinicImageString; previewImg.style.display = "block"; uploadPrompt.style.display = "none"; }
                 if (data.doctorProfilePic) { profileImageString = data.doctorProfilePic; profilePreviewImg.src = profileImageString; profilePreviewImg.style.display = "block"; profilePrompt.style.display = "none"; }
@@ -463,6 +467,8 @@
                 city: document.getElementById("profile-city").value.trim().toLowerCase(),
                 address: document.getElementById("profile-address").value.trim(),
                 requirements: document.getElementById("profile-requirements").value,
+                minGPA: document.getElementById("profile-min-gpa").value.trim(),
+                prerequisites: document.getElementById("profile-prerequisites").value.trim(),
                 clinicImage: clinicImageString,
                 doctorProfilePic: profileImageString
             };
@@ -841,3 +847,4 @@
     </script>
 </body>
 </html>
+
