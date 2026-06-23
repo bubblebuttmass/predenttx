@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -95,6 +95,8 @@
         <button id="signup-btn" class="btn-secondary">Create Account</button>
 
         <a class="forgot-link" id="forgot-link">Forgot your password?</a>
+        <br>
+        <a class="forgot-link" id="resend-link" style="display:none;">Resend verification email</a>
 
         <p id="status-message"></p>
     </div>
@@ -115,6 +117,9 @@
         const statusMessage = document.getElementById("status-message");
         const loginBtn = document.getElementById("login-btn");
         const signupBtn = document.getElementById("signup-btn");
+
+        const resendLink = document.getElementById("resend-link");
+        let pendingUnverifiedUser = null;
 
         function setStatus(text, type) {
             statusMessage.innerText = text;
@@ -149,7 +154,7 @@
                 await setDoc(doc(db, "users", user.uid), { email, role });
                 await sendEmailVerification(user);
 
-                setStatus("Account created! Check your email to confirm your address, then log in below.", "success");
+                setStatus("Account created! Check your email to verify your address — if you don't see it within a minute, check your spam or junk folder. Once verified, log in below.", "success");
                 emailInput.value = "";
                 passwordInput.value = "";
             } catch (error) {
@@ -167,13 +172,16 @@
 
             setBusy(true);
             setStatus("Logging in...", "");
+            resendLink.style.display = "none";
 
             try {
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
 
                 if (!user.emailVerified) {
-                    setStatus("Please verify your email before logging in — check your inbox, or click below to resend.", "error");
+                    setStatus("Please verify your email before logging in — check spam, or click below to resend.", "error");
+                    pendingUnverifiedUser = user;
+                    resendLink.style.display = "inline-block";
                     setBusy(false);
                     return;
                 }
@@ -182,6 +190,17 @@
             } catch (error) {
                 setStatus("Wrong email or password.", "error");
                 setBusy(false);
+            }
+        });
+
+        resendLink.addEventListener("click", async () => {
+            if (!pendingUnverifiedUser) return;
+            setStatus("Sending a new verification email...", "");
+            try {
+                await sendEmailVerification(pendingUnverifiedUser);
+                setStatus("Sent! Check your inbox (and spam folder) in a minute or two.", "success");
+            } catch (error) {
+                setStatus(error.message, "error");
             }
         });
 

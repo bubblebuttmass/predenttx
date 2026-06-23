@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -285,7 +285,7 @@
         let currentStudentEmail = "";
         let unreadNotificationCount = 0;
         let profilePicString = "";
-        let acceptedRequestsCache = []; // {id, dentistId, clinicName, requestedDate}
+        let acceptedRequestsCache = [];
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = "login.html"; return; }
@@ -345,7 +345,6 @@
             if (!file.type.startsWith("image/")) return;
             if (file.size > 5 * 1024 * 1024) { alert("Image must be under 5MB."); return; }
 
-            // Show an instant local preview while the real upload happens in the background.
             const localPreviewUrl = URL.createObjectURL(file);
             avatarPreview.src = localPreviewUrl;
             avatarPreview.style.display = "block";
@@ -409,14 +408,12 @@
             logRequestSelect.innerHTML = '<option value="">Select an accepted clinic...</option>';
 
             try {
-                // Queried by studentId (a real uid) now, not a typed/spoofable email.
                 const q = query(collection(db, "shadowing_requests"), where("studentId", "==", uid));
                 const querySnapshot = await getDocs(q);
 
                 if (querySnapshot.empty) {
                     applicationsContainer.innerHTML = '<p class="empty-message">You haven\'t submitted any shadowing requests yet.</p>';
-                    return;
-                }
+                } else {
 
                 for (const documentSnapshot of querySnapshot.docs) {
                     const request = documentSnapshot.data();
@@ -473,6 +470,8 @@
                     }
                 }
 
+                } // end shadowing block
+
                 if (unreadNotificationCount > 0) {
                     bellBadge.innerText = unreadNotificationCount;
                     bellBadge.style.display = "block";
@@ -481,10 +480,26 @@
                     notificationListContainer.innerHTML = '<p style="text-align: center; color: #999; font-style: italic; margin-top: 15px;">Your feed is clear.</p>';
                 }
 
+                // Also pull accepted job applications so paid hours can be logged.
+                const jobAppQuery = query(collection(db, "job_applications"), where("studentId", "==", uid), where("status", "==", "accepted"));
+                const jobAppSnap = await getDocs(jobAppQuery);
+                jobAppSnap.forEach((d) => {
+                    const app = d.data();
+                    acceptedRequestsCache.push({
+                        id: d.id,
+                        dentistId: app.hostId,
+                        clinicName: app.jobTitle ? `${app.jobTitle} (Job)` : "Accepted Job",
+                        requestedDate: null
+                    });
+                });
+
+                // Populate the log hours dropdown with all accepted connections.
                 acceptedRequestsCache.forEach((r) => {
                     const opt = document.createElement("option");
                     opt.value = r.id;
-                    opt.innerText = `${r.clinicName} — requested ${r.requestedDate}`;
+                    opt.innerText = r.requestedDate
+                        ? `${r.clinicName} — requested ${r.requestedDate}`
+                        : r.clinicName;
                     logRequestSelect.appendChild(opt);
                 });
 
@@ -547,7 +562,7 @@
 
                 snap.forEach((d) => {
                     const log = d.data();
-                    const category = log.category || "shadowing"; // older logs predate categorization
+                    const category = log.category || "shadowing";
 
                     if (log.status === "approved" && totals.hasOwnProperty(category)) {
                         totals[category] += Number(log.hours) || 0;
