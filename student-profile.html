@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -157,7 +157,7 @@
         <a href="index.html" class="logo">PreDentTX</a>
         <div class="nav-links">
             <div class="notification-wrapper">
-                <button class="notification-bell" id="bell-btn">🔔<span class="notification-badge" id="bell-badge">0</span></button>
+                <button class="notification-bell" id="bell-btn">ðŸ””<span class="notification-badge" id="bell-badge">0</span></button>
                 <div class="notification-dropdown" id="bell-dropdown">
                     <div class="notification-header">
                         <span>Updates Feed</span>
@@ -198,7 +198,7 @@
                     <input type="text" id="student-school" placeholder="Undergraduate University (e.g., UT Austin, Texas A&M)">
                 </div>
             </div>
-            <input type="text" id="student-preferred-city" placeholder="Your City in Texas (for weekly email digest — e.g., Austin, Houston, Dallas)">
+            <input type="text" id="student-preferred-city" placeholder="Your City in Texas (for weekly email digest â€” e.g., Austin, Houston, Dallas)">
             <textarea id="student-bio" rows="3" placeholder="Write a short personal bio for dentists to review (e.g., 'Junior Pre-Dental student aiming to apply next cycle...')" style="resize:none;"></textarea>
             <button id="save-profile-btn">Save Profile Information</button>
             <p id="save-status" style="color: var(--primary-green); font-weight: bold; margin-top: 10px; margin-bottom: 0;"></p>
@@ -379,7 +379,7 @@
                 { done: !!document.getElementById("student-last-name").value.trim(), tip: "Add your last name" },
                 { done: !!document.getElementById("student-school").value.trim(), tip: "Add your university" },
                 { done: !!document.getElementById("student-preferred-city").value.trim(), tip: "Add your city for the weekly digest" },
-                { done: document.getElementById("student-bio").value.trim().length > 30, tip: "Write a bio (at least a sentence)" },
+                { done: document.getElementById("student-bio").value.trim().length > 10, tip: "Write a short bio" },
                 { done: !!profilePicString, tip: "Upload a profile photo" },
             ];
 
@@ -391,11 +391,12 @@
             document.getElementById("strength-bar").style.background = pct < 40 ? "#e74c3c" : pct < 80 ? "#f39c12" : "var(--primary-green)";
             document.getElementById("strength-label").innerText = pct + "%";
             document.getElementById("strength-label").style.color = pct < 40 ? "#e74c3c" : pct < 80 ? "#f39c12" : "var(--primary-green)";
-            document.getElementById("strength-tips").innerText = missing.length > 0 ? "To improve: " + missing.join(" · ") : "Great profile! You're all set.";
+            document.getElementById("strength-tips").innerText = missing.length > 0 ? "To improve: " + missing.join(" Â· ") : "Great profile! You're all set.";
         }
 
         ["student-first-name","student-last-name","student-school","student-preferred-city","student-bio"].forEach(id => {
             document.getElementById(id).addEventListener("input", updateProfileStrength);
+            document.getElementById(id).addEventListener("keyup", updateProfileStrength);
         });
 
         document.getElementById("save-profile-btn").addEventListener("click", async () => {
@@ -506,9 +507,9 @@
                         notificationItem.className = "notification-item";
 
                         if (request.requestStatus === "accepted") {
-                            notificationItem.innerHTML = `🎉 Your request for <strong>${escapeHtml(request.requestedDate)}</strong> at ${escapeHtml(clinicName)} was <strong>ACCEPTED</strong>! Check instructions.`;
+                            notificationItem.innerHTML = `ðŸŽ‰ Your request for <strong>${escapeHtml(request.requestedDate)}</strong> at ${escapeHtml(clinicName)} was <strong>ACCEPTED</strong>! Check instructions.`;
                         } else {
-                            notificationItem.innerHTML = `❌ Your request for <strong>${escapeHtml(request.requestedDate)}</strong> at ${escapeHtml(clinicName)} was declined.`;
+                            notificationItem.innerHTML = `âŒ Your request for <strong>${escapeHtml(request.requestedDate)}</strong> at ${escapeHtml(clinicName)} was declined.`;
                         }
                         notificationListContainer.appendChild(notificationItem);
                     }
@@ -524,7 +525,7 @@
                     notificationListContainer.innerHTML = '<p style="text-align: center; color: #999; font-style: italic; margin-top: 15px;">Your feed is clear.</p>';
                 }
 
-                // Also pull accepted job applications — a student hired for a paid
+                // Also pull accepted job applications â€” a student hired for a paid
                 // dental position needs to be able to log those hours too.
                 const jobAppQuery = query(collection(db, "job_applications"), where("studentId", "==", uid), where("status", "==", "accepted"));
                 const jobAppSnap = await getDocs(jobAppQuery);
@@ -556,7 +557,7 @@
                     const opt = document.createElement("option");
                     opt.value = r.id;
                     opt.innerText = r.requestedDate
-                        ? `${r.clinicName} — requested ${r.requestedDate}`
+                        ? `${r.clinicName} â€” requested ${r.requestedDate}`
                         : r.clinicName;
                     logRequestSelect.appendChild(opt);
                 });
@@ -633,7 +634,7 @@
                     row.innerHTML = `
                         <span style="font-size: 14px;">
                             <span class="badge ${category}" style="margin-right: 8px; font-size: 10px; padding: 3px 8px;">${category}</span>
-                            ${escapeHtml(log.clinicName) || "Clinic"} — ${log.hours} hrs on ${escapeHtml(log.logDate)}
+                            ${escapeHtml(log.clinicName) || "Clinic"} â€” ${log.hours} hrs on ${escapeHtml(log.logDate)}
                         </span>
                         <span class="badge ${log.status}">${log.status}</span>
                     `;
@@ -747,9 +748,10 @@
         });
     </script>
     <footer style="background-color: #0A5C36; color: white; text-align: center; padding: 20px; font-size: 13px; margin-top: 60px;">
-        <p style="margin: 0 0 8px 0;">© 2026 PreDentTX. All rights reserved.</p>
+        <p style="margin: 0 0 8px 0;">Â© 2026 PreDentTX. All rights reserved.</p>
         <a href="privacy.html" style="color: #D4AF37; text-decoration: none; margin: 0 10px;">Privacy Policy</a>
         <a href="privacy.html#terms" style="color: #D4AF37; text-decoration: none; margin: 0 10px;">Terms of Service</a>
     </footer>
 </body>
 </html>
+

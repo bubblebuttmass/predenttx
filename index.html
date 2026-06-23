@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -163,7 +163,7 @@
         </div>
         <div id="gpa-filter-row" style="margin-top: 14px; display: flex; justify-content: center; align-items: center; gap: 10px;">
             <label style="color: white; font-size: 14px; font-weight: bold;">My GPA:</label>
-            <select id="gpa-filter" style="padding: 8px 14px; border-radius: 20px; border: none; font-size: 14px; background: rgba(255,255,255,0.15); color: white; cursor: pointer;">
+            <select id="gpa-filter" style="padding: 8px 14px; border-radius: 20px; border: none; font-size: 14px; background: white; color: #0A5C36; cursor: pointer; font-weight: bold; border: 2px solid #D4AF37;">
                 <option value="">Show all clinics</option>
                 <option value="2.5">2.5+</option>
                 <option value="3.0">3.0+</option>
@@ -216,7 +216,7 @@
         let currentUser = null;
         let applyResumeUrl = "";
         let activeApplyTarget = null; // { type: 'event'|'job', id, hostId, title }
-        let listingCache = {}; // docId -> { type, hostId, title } — avoids putting free text in onclick attributes
+        let listingCache = {}; // docId -> { type, hostId, title } â€” avoids putting free text in onclick attributes
 
         function setActiveToggle(mode, btn) {
             activeSearchMode = mode;
@@ -273,7 +273,7 @@
             listingCache = {};
 
             // Firestore can't do real substring search, but a range query on a
-            // sorted field gives us "starts with" matching — a real improvement
+            // sorted field gives us "starts with" matching â€” a real improvement
             // over the old exact-match-only query, which failed on anything
             // that wasn't a perfect lowercase match (e.g. "Austin, TX" or a typo).
             const prefixEnd = cityQuery + '\uf8ff';
@@ -331,7 +331,7 @@
                             if (!el || revSnap.empty) return;
                             const total = revSnap.docs.reduce((sum, d) => sum + d.data().rating, 0);
                             const avg = (total / revSnap.size).toFixed(1);
-                            el.innerText = `★ ${avg} (${revSnap.size} review${revSnap.size !== 1 ? "s" : ""})`;
+                            el.innerText = `â˜… ${avg} (${revSnap.size} review${revSnap.size !== 1 ? "s" : ""})`;
                         });
                     });
 
@@ -380,8 +380,8 @@
                                 <h3 style="margin-bottom: 5px; color: var(--primary-green);">${escapeHtml(eventData.title)}</h3>
                                 <p style="font-size: 13px; color: #888; margin: 0 0 10px 0;">Hosted by: <strong>${escapeHtml(eventData.hostName) || ""}</strong></p>
 
-                                <p class="event-detail">📅 <strong>Date/Time:</strong> ${formattedDate}</p>
-                                <p class="event-detail">📍 <strong>Location:</strong> ${escapeHtml(eventData.location) || ""}</p>
+                                <p class="event-detail">ðŸ“… <strong>Date/Time:</strong> ${formattedDate}</p>
+                                <p class="event-detail">ðŸ“ <strong>Location:</strong> ${escapeHtml(eventData.location) || ""}</p>
                                 <p style="font-size: 14px; color: #444; margin-top: 10px; line-height: 1.4;">${escapeHtml(eventData.description) || ""}</p>
 
                                 <div class="event-contact-box">
@@ -421,9 +421,9 @@
                                 <h3 style="margin-bottom: 5px; color: var(--primary-green);">${escapeHtml(job.title)}</h3>
                                 <p style="font-size: 13px; color: #888; margin: 0 0 10px 0;">Hiring at: <strong>${escapeHtml(job.hostName) || ""}</strong></p>
 
-                                ${job.payRate ? `<p class="event-detail">💵 <strong>Pay:</strong> ${escapeHtml(job.payRate)}</p>` : ""}
-                                ${job.schedule ? `<p class="event-detail">🕐 <strong>Schedule:</strong> ${escapeHtml(job.schedule)}</p>` : ""}
-                                <p class="event-detail">📍 <strong>Location:</strong> ${escapeHtml(job.location) || ""}</p>
+                                ${job.payRate ? `<p class="event-detail">ðŸ’µ <strong>Pay:</strong> ${escapeHtml(job.payRate)}</p>` : ""}
+                                ${job.schedule ? `<p class="event-detail">ðŸ• <strong>Schedule:</strong> ${escapeHtml(job.schedule)}</p>` : ""}
+                                <p class="event-detail">ðŸ“ <strong>Location:</strong> ${escapeHtml(job.location) || ""}</p>
                                 <p style="font-size: 14px; color: #444; margin-top: 10px; line-height: 1.4;">${escapeHtml(job.description) || ""}</p>
                                 ${job.qualifications ? `<p style="font-size: 13px; color: #666; margin-top: 8px;"><strong>Preferred Qualifications:</strong> ${escapeHtml(job.qualifications)}</p>` : ""}
 
@@ -485,7 +485,7 @@
                     status: "pending",
                     timestamp: new Date().toISOString()
                 });
-                if (btn) { btn.innerText = "RSVP Sent ✓"; }
+                if (btn) { btn.innerText = "RSVP Sent âœ“"; }
                 notify({ type: "event_application", docId: newAppRef.id });
             } catch (err) {
                 if (btn) { btn.disabled = false; btn.innerText = "RSVP"; }
@@ -504,7 +504,7 @@
 
             if (file.size > 5 * 1024 * 1024) {
                 status.style.color = "red";
-                status.innerText = "File too large — must be under 5MB.";
+                status.innerText = "File too large â€” must be under 5MB.";
                 e.target.value = "";
                 return;
             }
@@ -564,9 +564,10 @@
         });
     </script>
     <footer style="background-color: #0A5C36; color: white; text-align: center; padding: 20px; font-size: 13px; margin-top: 60px;">
-        <p style="margin: 0 0 8px 0;">© 2026 PreDentTX. All rights reserved.</p>
+        <p style="margin: 0 0 8px 0;">Â© 2026 PreDentTX. All rights reserved.</p>
         <a href="privacy.html" style="color: #D4AF37; text-decoration: none; margin: 0 10px;">Privacy Policy</a>
         <a href="privacy.html#terms" style="color: #D4AF37; text-decoration: none; margin: 0 10px;">Terms of Service</a>
     </footer>
 </body>
 </html>
+
