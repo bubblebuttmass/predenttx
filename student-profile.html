@@ -493,6 +493,19 @@
                     });
                 });
 
+                // Also pull accepted event RSVPs so volunteering hours can be logged.
+                const eventAppQuery = query(collection(db, "event_applications"), where("studentId", "==", uid), where("status", "==", "accepted"));
+                const eventAppSnap = await getDocs(eventAppQuery);
+                eventAppSnap.forEach((d) => {
+                    const app = d.data();
+                    acceptedRequestsCache.push({
+                        id: d.id,
+                        dentistId: app.hostId,
+                        clinicName: app.eventTitle ? `${app.eventTitle} (Event)` : "Accepted Event",
+                        requestedDate: null
+                    });
+                });
+
                 // Populate the log hours dropdown with all accepted connections.
                 acceptedRequestsCache.forEach((r) => {
                     const opt = document.createElement("option");
