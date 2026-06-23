@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -137,6 +137,21 @@
                 <p id="display-requirements">Loading guidelines...</p>
             </div>
 
+            <div class="info-section" id="section-qualifications" style="display:none;">
+                <h3>Preferred Student Qualifications</h3>
+                <p id="display-qualifications"></p>
+            </div>
+
+            <div class="info-section" id="section-availability" style="display:none;">
+                <h3>Availability</h3>
+                <p id="display-availability"></p>
+            </div>
+
+            <div class="info-section" id="section-about" style="display:none;">
+                <h3>About the Practice</h3>
+                <p id="display-about"></p>
+            </div>
+
             <div class="request-form" id="request-form-logged-in" style="display:none;">
                 <h2>Request a Shadowing Date</h2>
                 <p class="logged-in-as" id="logged-in-as-text"></p>
@@ -223,6 +238,19 @@
                     document.getElementById("display-city").innerText = dentistData.city ? dentistData.city.toUpperCase() : "Texas";
                     document.getElementById("display-address").innerText = dentistData.address || "";
                     document.getElementById("display-requirements").innerText = dentistData.requirements || "No specific requirements listed.";
+
+                    if (dentistData.qualifications) {
+                        document.getElementById("display-qualifications").innerText = dentistData.qualifications;
+                        document.getElementById("section-qualifications").style.display = "block";
+                    }
+                    if (dentistData.availability) {
+                        document.getElementById("display-availability").innerText = dentistData.availability;
+                        document.getElementById("section-availability").style.display = "block";
+                    }
+                    if (dentistData.about) {
+                        document.getElementById("display-about").innerText = dentistData.about;
+                        document.getElementById("section-about").style.display = "block";
+                    }
                 }
             } catch (error) {
                 console.error(error);
@@ -262,8 +290,6 @@
             statusText.innerText = "Sending request to clinic...";
             statusText.style.color = "var(--primary-green)";
 
-            // studentId comes from the authenticated session, not a typed field —
-            // this is what makes it impossible to submit a request as someone else.
             const requestData = {
                 dentistId: dentistId,
                 studentId: currentUser.uid,

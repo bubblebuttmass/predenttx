@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -151,6 +151,14 @@
             <input type="text" id="profile-city" placeholder="City">
             <input type="text" id="profile-address" placeholder="Street Address (e.g., 123 Main St, Suite 200)">
             <textarea id="profile-requirements" rows="2" placeholder="Shadowing Requirements"></textarea>
+            <textarea id="profile-qualifications" rows="2" placeholder="Student Qualifications Preferred (e.g., Completed BIO 101, GPA above 3.0, HIPAA certified...)"></textarea>
+            <select id="profile-availability">
+                <option value="">Shadowing Availability — Full-Time or Part-Time</option>
+                <option value="Full-Time">Full-Time Shadowing Available</option>
+                <option value="Part-Time">Part-Time Shadowing Available</option>
+                <option value="Both">Both Full-Time and Part-Time Available</option>
+            </select>
+            <textarea id="profile-about" rows="3" placeholder="About the Practice — describe the clinic environment, what students can expect to observe, procedures performed, team culture, etc."></textarea>
             <label style="font-weight: bold; display: block; margin-bottom: 5px;">Clinic Showcase Photo:</label>
             <div class="upload-drop-zone" id="drop-zone">
                 <p id="upload-prompt" style="margin: 0; color: #555;">Drag & drop clinic photo here, or <strong>click to browse files</strong></p>
@@ -353,8 +361,6 @@
             bellBadge.style.display = "none";
         });
 
-        // Now looks up the student's profile by uid directly — no need to
-        // search the users collection by email anymore.
         window.viewStudentProfileCard = async (e, studentId) => {
             if (e) e.stopPropagation();
             document.getElementById("modal-stud-name").innerText = "Loading profile...";
@@ -378,7 +384,6 @@
             } catch (err) { console.error(err); }
         };
 
-        // Profile Avatar Drag Logic
         profileDropZone.addEventListener("click", () => profileFileInput.click());
         profileDropZone.addEventListener("dragover", (e) => { e.preventDefault(); profileDropZone.classList.add("dragover"); });
         profileDropZone.addEventListener("dragleave", () => profileDropZone.classList.remove("dragover"));
@@ -396,7 +401,6 @@
             } catch (err) { alert("Upload failed: " + err.message); }
         }
 
-        // Clinic Image Drag Logic
         dropZone.addEventListener("click", () => fileInput.click());
         dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("dragover"); });
         dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
@@ -414,7 +418,6 @@
             } catch (err) { alert("Upload failed: " + err.message); }
         }
 
-        // Event Image Drag Logic
         eventDropZone.addEventListener("click", () => eventFileInput.click());
         eventDropZone.addEventListener("dragover", (e) => { e.preventDefault(); eventDropZone.classList.add("dragover"); });
         eventDropZone.addEventListener("dragleave", () => eventDropZone.classList.remove("dragover"));
@@ -442,6 +445,9 @@
                 document.getElementById("profile-city").value = data.city || "";
                 document.getElementById("profile-address").value = data.address || "";
                 document.getElementById("profile-requirements").value = data.requirements || "";
+                document.getElementById("profile-qualifications").value = data.qualifications || "";
+                document.getElementById("profile-availability").value = data.availability || "";
+                document.getElementById("profile-about").value = data.about || "";
 
                 if (data.clinicImage) { clinicImageString = data.clinicImage; previewImg.src = clinicImageString; previewImg.style.display = "block"; uploadPrompt.style.display = "none"; }
                 if (data.doctorProfilePic) { profileImageString = data.doctorProfilePic; profilePreviewImg.src = profileImageString; profilePreviewImg.style.display = "block"; profilePrompt.style.display = "none"; }
@@ -461,6 +467,9 @@
                 city: document.getElementById("profile-city").value.trim().toLowerCase(),
                 address: document.getElementById("profile-address").value.trim(),
                 requirements: document.getElementById("profile-requirements").value,
+                qualifications: document.getElementById("profile-qualifications").value,
+                availability: document.getElementById("profile-availability").value,
+                about: document.getElementById("profile-about").value,
                 clinicImage: clinicImageString,
                 doctorProfilePic: profileImageString
             };
@@ -490,8 +499,6 @@
             statusMsg.style.color = "var(--event-purple)";
             statusMsg.innerText = "Publishing event to public feed...";
 
-            // Real Timestamp now instead of a free-text string, so it can be
-            // sorted and auto-expired once it's in the past.
             const eventData = {
                 hostId: currentUserId,
                 hostName: document.getElementById("profile-clinic-name").value || document.getElementById("profile-doctor-name").value || "Local Clinic",
@@ -592,8 +599,6 @@
                         foundRequests = true;
                         unreadNotificationCount++;
 
-                        // Direct doc lookup by studentId — no more searching the
-                        // users collection by a typed email string.
                         const studentDoc = await getDoc(doc(db, "users", request.studentId));
                         let displayName = request.studentEmail;
                         if (studentDoc.exists()) {
@@ -667,8 +672,6 @@
             } catch (error) { alert(error.message); }
         };
 
-        // Now scoped to this dentist's own uid — previously this pulled
-        // every clinic's pending logs regardless of who was logged in.
         async function loadPendingLogs(dentistUid) {
             inboxContainer.innerHTML = "";
             try {
@@ -714,10 +717,6 @@
             } catch (error) { alert(error.message); }
         };
 
-        // Shared by Event RSVPs and Job Applications — same shape, just a
-        // different collection and which field holds the listing's title.
-        // Events no longer carry a message/resume (RSVP is one-click), so
-        // those sections only render when the data is actually present.
         async function loadApplications(collectionName, containerId, titleField, label, dentistUid) {
             const container = document.getElementById(containerId);
             container.innerHTML = "";
@@ -773,8 +772,6 @@
             return loadApplications("job_applications", "job-applications-container", "jobTitle", "Job", dentistUid);
         }
 
-        // Lets a dentist see and take down their own posted listings —
-        // previously there was no way to remove a posting once it was live.
         async function loadMyEvents(dentistUid) {
             const container = document.getElementById("my-events-list");
             container.innerHTML = "";
