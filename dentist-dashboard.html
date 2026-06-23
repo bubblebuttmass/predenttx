@@ -151,14 +151,6 @@
             <input type="text" id="profile-city" placeholder="City">
             <input type="text" id="profile-address" placeholder="Street Address (e.g., 123 Main St, Suite 200)">
             <textarea id="profile-requirements" rows="2" placeholder="Shadowing Requirements"></textarea>
-            <textarea id="profile-qualifications" rows="2" placeholder="Student Qualifications Preferred (e.g., Completed BIO 101, GPA above 3.0, HIPAA certified...)"></textarea>
-            <select id="profile-availability">
-                <option value="">Shadowing Availability — Full-Time or Part-Time</option>
-                <option value="Full-Time">Full-Time Shadowing Available</option>
-                <option value="Part-Time">Part-Time Shadowing Available</option>
-                <option value="Both">Both Full-Time and Part-Time Available</option>
-            </select>
-            <textarea id="profile-about" rows="3" placeholder="About the Practice — describe the clinic environment, what students can expect to observe, procedures performed, team culture, etc."></textarea>
             <label style="font-weight: bold; display: block; margin-bottom: 5px;">Clinic Showcase Photo:</label>
             <div class="upload-drop-zone" id="drop-zone">
                 <p id="upload-prompt" style="margin: 0; color: #555;">Drag & drop clinic photo here, or <strong>click to browse files</strong></p>
@@ -213,10 +205,17 @@
                 <option value="Hygienist">Hygienist</option>
                 <option value="Other">Other</option>
             </select>
+            <select id="job-schedule">
+                <option value="">Position Type — Full-Time or Part-Time</option>
+                <option value="Full-Time">Full-Time</option>
+                <option value="Part-Time">Part-Time</option>
+                <option value="PRN / As Needed">PRN / As Needed</option>
+            </select>
             <input type="text" id="job-pay" placeholder="Pay Rate (e.g., $18-22/hr)">
             <input type="text" id="job-location" placeholder="Exact Location / Address">
             <input type="text" id="job-city" placeholder="City (Important for search)">
-            <textarea id="job-description" rows="3" placeholder="Describe the role, hours, and requirements..."></textarea>
+            <textarea id="job-description" rows="3" placeholder="Describe the role, hours, and responsibilities..."></textarea>
+            <textarea id="job-qualifications" rows="2" placeholder="Preferred Qualifications (e.g., 1 year experience, DANB certified, bilingual...)"></textarea>
             <input type="text" id="job-contact" placeholder="How to Apply (email, phone, or link)">
 
             <button id="create-job-btn" class="btn-job">Publish Job Listing</button>
@@ -445,9 +444,6 @@
                 document.getElementById("profile-city").value = data.city || "";
                 document.getElementById("profile-address").value = data.address || "";
                 document.getElementById("profile-requirements").value = data.requirements || "";
-                document.getElementById("profile-qualifications").value = data.qualifications || "";
-                document.getElementById("profile-availability").value = data.availability || "";
-                document.getElementById("profile-about").value = data.about || "";
 
                 if (data.clinicImage) { clinicImageString = data.clinicImage; previewImg.src = clinicImageString; previewImg.style.display = "block"; uploadPrompt.style.display = "none"; }
                 if (data.doctorProfilePic) { profileImageString = data.doctorProfilePic; profilePreviewImg.src = profileImageString; profilePreviewImg.style.display = "block"; profilePrompt.style.display = "none"; }
@@ -467,9 +463,6 @@
                 city: document.getElementById("profile-city").value.trim().toLowerCase(),
                 address: document.getElementById("profile-address").value.trim(),
                 requirements: document.getElementById("profile-requirements").value,
-                qualifications: document.getElementById("profile-qualifications").value,
-                availability: document.getElementById("profile-availability").value,
-                about: document.getElementById("profile-about").value,
                 clinicImage: clinicImageString,
                 doctorProfilePic: profileImageString
             };
@@ -555,10 +548,12 @@
                 hostName: document.getElementById("profile-clinic-name").value || document.getElementById("profile-doctor-name").value || "Local Clinic",
                 title: title,
                 jobType: document.getElementById("job-type").value,
+                schedule: document.getElementById("job-schedule").value,
                 payRate: document.getElementById("job-pay").value.trim(),
                 location: document.getElementById("job-location").value.trim(),
                 city: city,
                 description: document.getElementById("job-description").value.trim(),
+                qualifications: document.getElementById("job-qualifications").value.trim(),
                 contactInfo: contact,
                 datePosted: Timestamp.now()
             };
@@ -571,6 +566,8 @@
                 document.getElementById("job-pay").value = "";
                 document.getElementById("job-location").value = "";
                 document.getElementById("job-description").value = "";
+                document.getElementById("job-qualifications").value = "";
+                document.getElementById("job-schedule").value = "";
                 document.getElementById("job-contact").value = "";
                 loadMyJobs(currentUserId);
             } catch (error) {
