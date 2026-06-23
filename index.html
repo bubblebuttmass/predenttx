@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -204,8 +204,8 @@
         let activeSearchMode = "clinics";
         let currentUser = null;
         let applyResumeUrl = "";
-        let activeApplyTarget = null; // { type: 'event'|'job', id, hostId, title }
-        let listingCache = {}; // docId -> { type, hostId, title } — avoids putting free text in onclick attributes
+        let activeApplyTarget = null;
+        let listingCache = {};
 
         function setActiveToggle(mode, btn) {
             activeSearchMode = mode;
@@ -258,10 +258,6 @@
             resultsTitle.innerText = `Results for "${searchInput.value}"`;
             listingCache = {};
 
-            // Firestore can't do real substring search, but a range query on a
-            // sorted field gives us "starts with" matching — a real improvement
-            // over the old exact-match-only query, which failed on anything
-            // that wasn't a perfect lowercase match (e.g. "Austin, TX" or a typo).
             const prefixEnd = cityQuery + '\uf8ff';
 
             try {
@@ -385,8 +381,10 @@
                                 <p style="font-size: 13px; color: #888; margin: 0 0 10px 0;">Hiring at: <strong>${escapeHtml(job.hostName) || ""}</strong></p>
 
                                 ${job.payRate ? `<p class="event-detail">💵 <strong>Pay:</strong> ${escapeHtml(job.payRate)}</p>` : ""}
+                                ${job.schedule ? `<p class="event-detail">🕐 <strong>Schedule:</strong> ${escapeHtml(job.schedule)}</p>` : ""}
                                 <p class="event-detail">📍 <strong>Location:</strong> ${escapeHtml(job.location) || ""}</p>
                                 <p style="font-size: 14px; color: #444; margin-top: 10px; line-height: 1.4;">${escapeHtml(job.description) || ""}</p>
+                                ${job.qualifications ? `<p style="font-size: 13px; color: #666; margin-top: 8px;"><strong>Preferred Qualifications:</strong> ${escapeHtml(job.qualifications)}</p>` : ""}
 
                                 <div class="event-contact-box job-contact-box">
                                     <strong>How to Apply:</strong><br>
@@ -402,8 +400,6 @@
                 resultsContainer.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
             }
         });
-
-        // --- Apply modal: Jobs only now. Events are a one-click RSVP, no form needed. ---
 
         window.openApplyModal = (id) => {
             if (!currentUser) {
