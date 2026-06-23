@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -161,6 +161,17 @@
             <input type="text" id="search-city" placeholder="What city are you looking in? (e.g., Austin)">
             <button type="button" id="search-btn">Search</button>
         </div>
+        <div id="gpa-filter-row" style="margin-top: 14px; display: flex; justify-content: center; align-items: center; gap: 10px;">
+            <label style="color: white; font-size: 14px; font-weight: bold;">My GPA:</label>
+            <select id="gpa-filter" style="padding: 8px 14px; border-radius: 20px; border: none; font-size: 14px; background: rgba(255,255,255,0.15); color: white; cursor: pointer;">
+                <option value="">Show all clinics</option>
+                <option value="2.5">2.5+</option>
+                <option value="3.0">3.0+</option>
+                <option value="3.3">3.3+</option>
+                <option value="3.5">3.5+</option>
+                <option value="3.7">3.7+</option>
+            </select>
+        </div>
     </div>
 
     <div class="results-section">
@@ -204,8 +215,8 @@
         let activeSearchMode = "clinics";
         let currentUser = null;
         let applyResumeUrl = "";
-        let activeApplyTarget = null;
-        let listingCache = {};
+        let activeApplyTarget = null; // { type: 'event'|'job', id, hostId, title }
+        let listingCache = {}; // docId -> { type, hostId, title } — avoids putting free text in onclick attributes
 
         function setActiveToggle(mode, btn) {
             activeSearchMode = mode;
@@ -216,16 +227,19 @@
         toggleClinicsBtn.addEventListener("click", () => {
             setActiveToggle("clinics", toggleClinicsBtn);
             searchInput.placeholder = "Search clinics by city (e.g., Austin)";
+            document.getElementById("gpa-filter-row").style.display = "flex";
         });
 
         toggleEventsBtn.addEventListener("click", () => {
             setActiveToggle("events", toggleEventsBtn);
             searchInput.placeholder = "Search events by city (e.g., Dallas)";
+            document.getElementById("gpa-filter-row").style.display = "none";
         });
 
         toggleJobsBtn.addEventListener("click", () => {
             setActiveToggle("jobs", toggleJobsBtn);
             searchInput.placeholder = "Search paid positions by city (e.g., Houston)";
+            document.getElementById("gpa-filter-row").style.display = "none";
         });
 
         onAuthStateChanged(auth, async (user) => {
@@ -258,6 +272,10 @@
             resultsTitle.innerText = `Results for "${searchInput.value}"`;
             listingCache = {};
 
+            // Firestore can't do real substring search, but a range query on a
+            // sorted field gives us "starts with" matching — a real improvement
+            // over the old exact-match-only query, which failed on anything
+            // that wasn't a perfect lowercase match (e.g. "Austin, TX" or a typo).
             const prefixEnd = cityQuery + '\uf8ff';
 
             try {
@@ -275,28 +293,51 @@
                         return;
                     }
 
+                    const myGPA = parseFloat(document.getElementById("gpa-filter").value) || 0;
+                    let shown = 0;
+
                     querySnapshot.forEach((docSnap) => {
                         const clinic = docSnap.data();
+
+                        // GPA filter: skip clinics whose minimum exceeds the student's selected GPA
+                        if (myGPA > 0 && clinic.minGPA && parseFloat(clinic.minGPA) > myGPA) return;
+
+                        shown++;
                         const card = document.createElement("div");
                         card.className = "clinic-card";
 
                         const clinicImage = clinic.clinicImage || "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=400";
                         const avatarImage = clinic.doctorProfilePic || `https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=${docSnap.id}`;
+                        const gpaTag = clinic.minGPA ? `<span style="font-size:12px; background:#eaf2ee; color:#0A5C36; border-radius:10px; padding:2px 8px; margin-left:6px; font-weight:bold;">Min GPA ${escapeHtml(clinic.minGPA)}</span>` : "";
 
                         card.innerHTML = `
                             <div style="background-image: url('${escapeHtml(clinicImage)}'); background-size: cover; background-position: center; height: 150px; border-radius: 6px; margin-bottom: 15px;"></div>
                             <div class="doctor-identity-row">
                                 <img class="doctor-avatar" src="${escapeHtml(avatarImage)}" alt="Doctor Profile">
                                 <div class="doctor-meta-text">
-                                    <h3>${escapeHtml(clinic.clinicName) || ""}</h3>
+                                    <h3>${escapeHtml(clinic.clinicName) || ""}${gpaTag}</h3>
                                     <span class="clinic-specialty">${escapeHtml(clinic.doctorName) || ""} | ${escapeHtml(clinic.specialty) || ""}</span>
                                 </div>
                             </div>
                             <p class="clinic-reqs"><strong>Requirements:</strong> ${escapeHtml(clinic.requirements) || "Contact clinic for details."}</p>
+                            <p id="rating-${docSnap.id}" style="font-size:13px; color:#D4AF37; margin-bottom:12px;"></p>
                             <a href="dentist-profile.html?id=${docSnap.id}" class="btn-view-profile">View Shadowing Schedule</a>
                         `;
                         resultsContainer.appendChild(card);
+
+                        // Load this clinic's average rating asynchronously
+                        getDocs(query(collection(db, "reviews"), where("dentistId", "==", docSnap.id))).then(revSnap => {
+                            const el = document.getElementById(`rating-${docSnap.id}`);
+                            if (!el || revSnap.empty) return;
+                            const total = revSnap.docs.reduce((sum, d) => sum + d.data().rating, 0);
+                            const avg = (total / revSnap.size).toFixed(1);
+                            el.innerText = `★ ${avg} (${revSnap.size} review${revSnap.size !== 1 ? "s" : ""})`;
+                        });
                     });
+
+                    if (shown === 0) {
+                        resultsContainer.innerHTML = "<p>No clinics match your GPA filter in this city. Try removing the filter or searching another city.</p>";
+                    }
 
                 } else if (activeSearchMode === "events") {
                     const q = query(
@@ -400,6 +441,8 @@
                 resultsContainer.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
             }
         });
+
+        // --- Apply modal: Jobs only now. Events are a one-click RSVP, no form needed. ---
 
         window.openApplyModal = (id) => {
             if (!currentUser) {
@@ -520,7 +563,6 @@
             }
         });
     </script>
-
     <footer style="background-color: #0A5C36; color: white; text-align: center; padding: 20px; font-size: 13px; margin-top: 60px;">
         <p style="margin: 0 0 8px 0;">© 2026 PreDentTX. All rights reserved.</p>
         <a href="privacy.html" style="color: #D4AF37; text-decoration: none; margin: 0 10px;">Privacy Policy</a>
@@ -528,4 +570,3 @@
     </footer>
 </body>
 </html>
-

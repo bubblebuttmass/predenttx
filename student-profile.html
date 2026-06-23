@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -198,9 +198,22 @@
                     <input type="text" id="student-school" placeholder="Undergraduate University (e.g., UT Austin, Texas A&M)">
                 </div>
             </div>
+            <input type="text" id="student-preferred-city" placeholder="Your City in Texas (for weekly email digest — e.g., Austin, Houston, Dallas)">
             <textarea id="student-bio" rows="3" placeholder="Write a short personal bio for dentists to review (e.g., 'Junior Pre-Dental student aiming to apply next cycle...')" style="resize:none;"></textarea>
             <button id="save-profile-btn">Save Profile Information</button>
             <p id="save-status" style="color: var(--primary-green); font-weight: bold; margin-top: 10px; margin-bottom: 0;"></p>
+
+            <!-- Profile strength indicator -->
+            <div style="margin-top: 18px; background: #f5f5f5; border-radius: 8px; padding: 14px 16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+                    <span style="font-size: 13px; font-weight: bold; color: #555;">Profile Strength</span>
+                    <span id="strength-label" style="font-size: 13px; font-weight: bold; color: var(--primary-green);">0%</span>
+                </div>
+                <div style="background:#ddd; border-radius:10px; height:10px; overflow:hidden;">
+                    <div id="strength-bar" style="height:100%; width:0%; background:var(--primary-green); border-radius:10px; transition:width 0.4s ease;"></div>
+                </div>
+                <p id="strength-tips" style="font-size:12px; color:#888; margin: 8px 0 0 0;"></p>
+            </div>
         </div>
 
         <div class="card-section">
@@ -285,7 +298,7 @@
         let currentStudentEmail = "";
         let unreadNotificationCount = 0;
         let profilePicString = "";
-        let acceptedRequestsCache = [];
+        let acceptedRequestsCache = []; // {id, dentistId, clinicName, requestedDate}
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = "login.html"; return; }
@@ -305,6 +318,7 @@
                 document.getElementById("student-first-name").value = data.firstName || "";
                 document.getElementById("student-last-name").value = data.lastName || "";
                 document.getElementById("student-school").value = data.school || "";
+                document.getElementById("student-preferred-city").value = data.preferredCity || "";
                 document.getElementById("student-bio").value = data.bio || "";
 
                 if (data.firstName) {
@@ -328,6 +342,7 @@
             loadStudentLogs(user.uid);
             loadEventRsvps(user.uid);
             loadJobApplications(user.uid);
+            updateProfileStrength();
         });
 
         avatarZone.addEventListener("click", () => avatarInput.click());
@@ -345,6 +360,7 @@
             if (!file.type.startsWith("image/")) return;
             if (file.size > 5 * 1024 * 1024) { alert("Image must be under 5MB."); return; }
 
+            // Show an instant local preview while the real upload happens in the background.
             const localPreviewUrl = URL.createObjectURL(file);
             avatarPreview.src = localPreviewUrl;
             avatarPreview.style.display = "block";
@@ -357,6 +373,31 @@
             }
         }
 
+        function updateProfileStrength() {
+            const checks = [
+                { done: !!document.getElementById("student-first-name").value.trim(), tip: "Add your first name" },
+                { done: !!document.getElementById("student-last-name").value.trim(), tip: "Add your last name" },
+                { done: !!document.getElementById("student-school").value.trim(), tip: "Add your university" },
+                { done: !!document.getElementById("student-preferred-city").value.trim(), tip: "Add your city for the weekly digest" },
+                { done: document.getElementById("student-bio").value.trim().length > 30, tip: "Write a bio (at least a sentence)" },
+                { done: !!profilePicString, tip: "Upload a profile photo" },
+            ];
+
+            const done = checks.filter(c => c.done).length;
+            const pct = Math.round((done / checks.length) * 100);
+            const missing = checks.filter(c => !c.done).map(c => c.tip);
+
+            document.getElementById("strength-bar").style.width = pct + "%";
+            document.getElementById("strength-bar").style.background = pct < 40 ? "#e74c3c" : pct < 80 ? "#f39c12" : "var(--primary-green)";
+            document.getElementById("strength-label").innerText = pct + "%";
+            document.getElementById("strength-label").style.color = pct < 40 ? "#e74c3c" : pct < 80 ? "#f39c12" : "var(--primary-green)";
+            document.getElementById("strength-tips").innerText = missing.length > 0 ? "To improve: " + missing.join(" · ") : "Great profile! You're all set.";
+        }
+
+        ["student-first-name","student-last-name","student-school","student-preferred-city","student-bio"].forEach(id => {
+            document.getElementById(id).addEventListener("input", updateProfileStrength);
+        });
+
         document.getElementById("save-profile-btn").addEventListener("click", async () => {
             const status = document.getElementById("save-status");
             const saveBtn = document.getElementById("save-profile-btn");
@@ -367,6 +408,7 @@
                 firstName: document.getElementById("student-first-name").value.trim(),
                 lastName: document.getElementById("student-last-name").value.trim(),
                 school: document.getElementById("student-school").value.trim(),
+                preferredCity: document.getElementById("student-preferred-city").value.trim().toLowerCase(),
                 bio: document.getElementById("student-bio").value.trim(),
                 profilePic: profilePicString,
                 role: "student",
@@ -378,6 +420,7 @@
                 status.innerText = "Success! Profile details updated live on PreDentTX.";
                 if (profilePicString) studentAvatar.style.backgroundImage = `url('${profilePicString}')`;
                 if (payload.firstName) welcomeTitle.innerText = `Welcome, ${payload.firstName}`;
+                updateProfileStrength();
             } catch (err) {
                 status.innerText = "Error saving profile: " + err.message;
             } finally {
@@ -408,6 +451,7 @@
             logRequestSelect.innerHTML = '<option value="">Select an accepted clinic...</option>';
 
             try {
+                // Queried by studentId (a real uid) now, not a typed/spoofable email.
                 const q = query(collection(db, "shadowing_requests"), where("studentId", "==", uid));
                 const querySnapshot = await getDocs(q);
 
@@ -480,7 +524,8 @@
                     notificationListContainer.innerHTML = '<p style="text-align: center; color: #999; font-style: italic; margin-top: 15px;">Your feed is clear.</p>';
                 }
 
-                // Also pull accepted job applications so paid hours can be logged.
+                // Also pull accepted job applications — a student hired for a paid
+                // dental position needs to be able to log those hours too.
                 const jobAppQuery = query(collection(db, "job_applications"), where("studentId", "==", uid), where("status", "==", "accepted"));
                 const jobAppSnap = await getDocs(jobAppQuery);
                 jobAppSnap.forEach((d) => {
@@ -575,7 +620,7 @@
 
                 snap.forEach((d) => {
                     const log = d.data();
-                    const category = log.category || "shadowing";
+                    const category = log.category || "shadowing"; // older logs predate categorization
 
                     if (log.status === "approved" && totals.hasOwnProperty(category)) {
                         totals[category] += Number(log.hours) || 0;
@@ -701,7 +746,6 @@
             signOut(auth).then(() => { window.location.href = "index.html"; });
         });
     </script>
-
     <footer style="background-color: #0A5C36; color: white; text-align: center; padding: 20px; font-size: 13px; margin-top: 60px;">
         <p style="margin: 0 0 8px 0;">© 2026 PreDentTX. All rights reserved.</p>
         <a href="privacy.html" style="color: #D4AF37; text-decoration: none; margin: 0 10px;">Privacy Policy</a>
@@ -709,4 +753,3 @@
     </footer>
 </body>
 </html>
-

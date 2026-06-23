@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -137,6 +137,29 @@
                 <p id="display-requirements">Loading guidelines...</p>
             </div>
 
+            <div class="info-section" id="section-gpa" style="display:none;">
+                <h3>Minimum GPA</h3>
+                <p id="display-min-gpa"></p>
+            </div>
+
+            <div class="info-section" id="section-prereqs" style="display:none;">
+                <h3>Prerequisite Courses</h3>
+                <p id="display-prerequisites"></p>
+            </div>
+
+            <div class="info-section">
+                <h3>Student Reviews</h3>
+                <p id="display-rating" style="font-size: 22px; font-weight: bold; color: var(--primary-green); margin-bottom: 5px;"></p>
+                <div id="reviews-list"></div>
+                <p id="no-reviews-msg" style="color: #aaa; font-style: italic; font-size: 14px;">No reviews yet — be the first!</p>
+            </div>
+
+            <!-- Share link button -->
+            <div style="margin-bottom: 15px;">
+                <button onclick="copyProfileLink()" style="background: none; border: 1px solid var(--primary-green); color: var(--primary-green); padding: 8px 16px; border-radius: 20px; font-size: 14px; cursor: pointer; font-weight: bold;">🔗 Copy Clinic Link</button>
+                <span id="copy-confirm" style="font-size: 13px; color: var(--primary-green); margin-left: 10px; display:none;">Link copied!</span>
+            </div>
+
             <div class="request-form" id="request-form-logged-in" style="display:none;">
                 <h2>Request a Shadowing Date</h2>
                 <p class="logged-in-as" id="logged-in-as-text"></p>
@@ -160,13 +183,56 @@
                 <p>Log in or create a free student account to send a request directly to this clinic.</p>
                 <a href="login.html">Log In / Sign Up &rarr;</a>
             </div>
+
+            <!-- Leave a Review (only shown after login) -->
+            <div class="request-form" id="review-form-section" style="display:none; margin-top: 20px;">
+                <h2>Leave a Review</h2>
+                <p style="font-size: 13px; color: #666; margin-top: -8px;">Share your experience to help other predental students.</p>
+                <div id="star-row" style="display:flex; gap:8px; font-size:28px; margin-bottom:14px; cursor:pointer;">
+                    <span class="star" data-val="1">☆</span>
+                    <span class="star" data-val="2">☆</span>
+                    <span class="star" data-val="3">☆</span>
+                    <span class="star" data-val="4">☆</span>
+                    <span class="star" data-val="5">☆</span>
+                </div>
+                <textarea id="review-text" rows="3" placeholder="Describe your experience — what did you observe, how was the environment, would you recommend this clinic?"></textarea>
+                <button id="submit-review-btn">Submit Review</button>
+                <p id="review-status" style="font-size: 13px; margin-top: 8px;"></p>
+            </div>
+
+            <!-- Report button (shown after login) -->
+            <div id="report-section" style="display:none; margin-top: 12px; text-align: right;">
+                <button onclick="openReportModal()" style="background:none; border:none; color:#ccc; font-size:12px; cursor:pointer; text-decoration:underline; padding:0;">Report this clinic</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Modal -->
+    <div id="report-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+        <div style="background:white; padding:25px; border-radius:12px; max-width:420px; width:90%; box-shadow:0 8px 24px rgba(0,0,0,0.15);">
+            <h3 style="color:#e74c3c; margin-top:0;">Report a Concern</h3>
+            <p style="font-size:14px; color:#555;">Reports are anonymous and reviewed privately. Only use this for genuine safety or conduct concerns.</p>
+            <select id="report-reason" style="width:100%; padding:10px; margin-bottom:12px; border:1px solid #ccc; border-radius:5px; font-size:14px;">
+                <option value="">Select a reason...</option>
+                <option value="inappropriate_conduct">Inappropriate conduct during shadowing</option>
+                <option value="false_info">False or misleading clinic information</option>
+                <option value="safety_concern">Safety concern</option>
+                <option value="harassment">Harassment or discrimination</option>
+                <option value="other">Other</option>
+            </select>
+            <textarea id="report-details" rows="3" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:5px; font-size:14px; box-sizing:border-box; margin-bottom:12px;" placeholder="Describe the issue (optional but helpful)..."></textarea>
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button onclick="document.getElementById('report-modal').style.display='none'" style="background:#aaa; padding:10px 18px; border:none; border-radius:5px; color:white; cursor:pointer; font-weight:bold;">Cancel</button>
+                <button onclick="submitReport()" style="background:#e74c3c; padding:10px 18px; border:none; border-radius:5px; color:white; cursor:pointer; font-weight:bold;">Submit Report</button>
+            </div>
+            <p id="report-modal-status" style="font-size:13px; margin-top:8px;"></p>
         </div>
     </div>
 
     <script type="module">
         import { auth, db, notify, uploadMedia, escapeHtml } from './firebase-config.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-        import { doc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+        import { doc, getDoc, collection, addDoc, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
         const urlParams = new URLSearchParams(window.location.search);
         const dentistId = urlParams.get('id');
@@ -223,7 +289,59 @@
                     document.getElementById("display-city").innerText = dentistData.city ? dentistData.city.toUpperCase() : "Texas";
                     document.getElementById("display-address").innerText = dentistData.address || "";
                     document.getElementById("display-requirements").innerText = dentistData.requirements || "No specific requirements listed.";
+
+                    if (dentistData.minGPA) {
+                        document.getElementById("display-min-gpa").innerText = dentistData.minGPA;
+                        document.getElementById("section-gpa").style.display = "block";
+                    }
+                    if (dentistData.prerequisites) {
+                        document.getElementById("display-prerequisites").innerText = dentistData.prerequisites;
+                        document.getElementById("section-prereqs").style.display = "block";
+                    }
                 }
+
+                await loadReviews();
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        async function loadReviews() {
+            const reviewsList = document.getElementById("reviews-list");
+            const ratingEl = document.getElementById("display-rating");
+            const noReviewsMsg = document.getElementById("no-reviews-msg");
+
+            try {
+                const q = query(collection(db, "reviews"), where("dentistId", "==", dentistId), orderBy("timestamp", "desc"));
+                const snap = await getDocs(q);
+
+                if (snap.empty) {
+                    ratingEl.innerText = "";
+                    noReviewsMsg.style.display = "block";
+                    return;
+                }
+
+                noReviewsMsg.style.display = "none";
+                let total = 0;
+                reviewsList.innerHTML = "";
+
+                snap.forEach((d) => {
+                    const r = d.data();
+                    total += r.rating;
+                    const stars = "★".repeat(r.rating) + "☆".repeat(5 - r.rating);
+                    const card = document.createElement("div");
+                    card.style.cssText = "border-bottom:1px solid #eee; padding:12px 0; font-size:14px;";
+                    card.innerHTML = `
+                        <div style="color:#D4AF37; font-size:18px; margin-bottom:4px;">${stars}</div>
+                        <p style="margin:0 0 4px 0; color:#333;">${escapeHtml(r.reviewText) || ""}</p>
+                        <span style="font-size:12px; color:#aaa;">${escapeHtml(r.studentName) || "Anonymous"} · ${r.timestamp ? new Date(r.timestamp).toLocaleDateString() : ""}</span>
+                    `;
+                    reviewsList.appendChild(card);
+                });
+
+                const avg = (total / snap.size).toFixed(1);
+                const stars = "★".repeat(Math.round(total / snap.size)) + "☆".repeat(5 - Math.round(total / snap.size));
+                ratingEl.innerHTML = `${stars} <span style="font-size:16px; color:#555;">${avg} / 5 &nbsp;(${snap.size} review${snap.size !== 1 ? "s" : ""})</span>`;
             } catch (error) {
                 console.error(error);
             }
@@ -235,11 +353,116 @@
                 document.getElementById("request-form-logged-in").style.display = "block";
                 document.getElementById("request-form-logged-out").style.display = "none";
                 document.getElementById("logged-in-as-text").innerText = `Requesting as: ${user.email}`;
+                document.getElementById("review-form-section").style.display = "block";
+                document.getElementById("report-section").style.display = "block";
             } else {
                 document.getElementById("request-form-logged-in").style.display = "none";
                 document.getElementById("request-form-logged-out").style.display = "block";
             }
         });
+
+        // --- Share link ---
+        window.copyProfileLink = () => {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                const confirm = document.getElementById("copy-confirm");
+                confirm.style.display = "inline";
+                setTimeout(() => { confirm.style.display = "none"; }, 2500);
+            });
+        };
+
+        // --- Star rating ---
+        let selectedRating = 0;
+        document.querySelectorAll(".star").forEach((star) => {
+            star.addEventListener("mouseover", () => {
+                const val = parseInt(star.dataset.val);
+                document.querySelectorAll(".star").forEach((s) => {
+                    s.innerText = parseInt(s.dataset.val) <= val ? "★" : "☆";
+                    s.style.color = parseInt(s.dataset.val) <= val ? "#D4AF37" : "#ccc";
+                });
+            });
+            star.addEventListener("mouseleave", () => {
+                document.querySelectorAll(".star").forEach((s) => {
+                    s.innerText = parseInt(s.dataset.val) <= selectedRating ? "★" : "☆";
+                    s.style.color = parseInt(s.dataset.val) <= selectedRating ? "#D4AF37" : "#ccc";
+                });
+            });
+            star.addEventListener("click", () => {
+                selectedRating = parseInt(star.dataset.val);
+            });
+        });
+
+        document.getElementById("submit-review-btn").addEventListener("click", async () => {
+            const statusEl = document.getElementById("review-status");
+            const text = document.getElementById("review-text").value.trim();
+
+            if (!currentUser) { statusEl.style.color = "red"; statusEl.innerText = "Please log in first."; return; }
+            if (!selectedRating) { statusEl.style.color = "red"; statusEl.innerText = "Please select a star rating."; return; }
+            if (!text) { statusEl.style.color = "red"; statusEl.innerText = "Please write a short review."; return; }
+
+            const btn = document.getElementById("submit-review-btn");
+            btn.disabled = true;
+            statusEl.style.color = "#666";
+            statusEl.innerText = "Submitting...";
+
+            try {
+                const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+                const name = userDoc.exists() && userDoc.data().firstName
+                    ? `${userDoc.data().firstName} ${userDoc.data().lastName || ""}`.trim()
+                    : "Student";
+
+                await addDoc(collection(db, "reviews"), {
+                    dentistId,
+                    studentId: currentUser.uid,
+                    studentName: name,
+                    rating: selectedRating,
+                    reviewText: text,
+                    timestamp: new Date().toISOString()
+                });
+
+                statusEl.style.color = "var(--primary-green)";
+                statusEl.innerText = "Review submitted! Thank you.";
+                document.getElementById("review-text").value = "";
+                selectedRating = 0;
+                document.querySelectorAll(".star").forEach(s => { s.innerText = "☆"; s.style.color = "#ccc"; });
+                await loadReviews();
+            } catch (err) {
+                statusEl.style.color = "red";
+                statusEl.innerText = "Error: " + err.message;
+                btn.disabled = false;
+            }
+        });
+
+        // --- Report ---
+        window.openReportModal = () => {
+            document.getElementById("report-modal").style.display = "flex";
+        };
+
+        window.submitReport = async () => {
+            const reason = document.getElementById("report-reason").value;
+            const details = document.getElementById("report-details").value.trim();
+            const statusEl = document.getElementById("report-modal-status");
+
+            if (!reason) { statusEl.style.color = "red"; statusEl.innerText = "Please select a reason."; return; }
+
+            try {
+                await addDoc(collection(db, "reports"), {
+                    reportedId: dentistId,
+                    reportedType: "dentist",
+                    reporterId: currentUser ? currentUser.uid : "anonymous",
+                    reason,
+                    details,
+                    timestamp: new Date().toISOString(),
+                    status: "pending"
+                });
+                statusEl.style.color = "green";
+                statusEl.innerText = "Report submitted. We'll review it shortly.";
+                setTimeout(() => { document.getElementById("report-modal").style.display = "none"; }, 2000);
+            } catch (err) {
+                statusEl.style.color = "red";
+                statusEl.innerText = "Error: " + err.message;
+            }
+        };
 
         document.getElementById("apply-btn").addEventListener("click", async () => {
             const applyBtn = document.getElementById("apply-btn");
@@ -262,6 +485,8 @@
             statusText.innerText = "Sending request to clinic...";
             statusText.style.color = "var(--primary-green)";
 
+            // studentId comes from the authenticated session, not a typed field —
+            // this is what makes it impossible to submit a request as someone else.
             const requestData = {
                 dentistId: dentistId,
                 studentId: currentUser.uid,
@@ -294,7 +519,6 @@
 
         loadProfile();
     </script>
-
     <footer style="background-color: #0A5C36; color: white; text-align: center; padding: 20px; font-size: 13px; margin-top: 60px;">
         <p style="margin: 0 0 8px 0;">© 2026 PreDentTX. All rights reserved.</p>
         <a href="privacy.html" style="color: #D4AF37; text-decoration: none; margin: 0 10px;">Privacy Policy</a>
@@ -302,4 +526,3 @@
     </footer>
 </body>
 </html>
-
