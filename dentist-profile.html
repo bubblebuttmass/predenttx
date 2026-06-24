@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -151,12 +151,12 @@
                 <h3>Student Reviews</h3>
                 <p id="display-rating" style="font-size: 22px; font-weight: bold; color: var(--primary-green); margin-bottom: 5px;"></p>
                 <div id="reviews-list"></div>
-                <p id="no-reviews-msg" style="color: #aaa; font-style: italic; font-size: 14px;">No reviews yet — be the first!</p>
+                <p id="no-reviews-msg" style="color: #aaa; font-style: italic; font-size: 14px;">No reviews yet â€” be the first!</p>
             </div>
 
             <!-- Share link button -->
             <div style="margin-bottom: 15px;">
-                <button onclick="copyProfileLink()" style="background: none; border: 1px solid var(--primary-green); color: var(--primary-green); padding: 8px 16px; border-radius: 20px; font-size: 14px; cursor: pointer; font-weight: bold;">🔗 Copy Clinic Link</button>
+                <button onclick="copyProfileLink()" style="background: none; border: 1px solid var(--primary-green); color: var(--primary-green); padding: 8px 16px; border-radius: 20px; font-size: 14px; cursor: pointer; font-weight: bold;">ðŸ”— Copy Clinic Link</button>
                 <span id="copy-confirm" style="font-size: 13px; color: var(--primary-green); margin-left: 10px; display:none;">Link copied!</span>
             </div>
 
@@ -189,13 +189,13 @@
                 <h2>Leave a Review</h2>
                 <p style="font-size: 13px; color: #666; margin-top: -8px;">Share your experience to help other predental students.</p>
                 <div id="star-row" style="display:flex; gap:8px; font-size:28px; margin-bottom:14px; cursor:pointer;">
-                    <span class="star" data-val="1">☆</span>
-                    <span class="star" data-val="2">☆</span>
-                    <span class="star" data-val="3">☆</span>
-                    <span class="star" data-val="4">☆</span>
-                    <span class="star" data-val="5">☆</span>
+                    <span class="star" data-val="1">â˜†</span>
+                    <span class="star" data-val="2">â˜†</span>
+                    <span class="star" data-val="3">â˜†</span>
+                    <span class="star" data-val="4">â˜†</span>
+                    <span class="star" data-val="5">â˜†</span>
                 </div>
-                <textarea id="review-text" rows="3" placeholder="Describe your experience — what did you observe, how was the environment, would you recommend this clinic?"></textarea>
+                <textarea id="review-text" rows="3" placeholder="Describe your experience â€” what did you observe, how was the environment, would you recommend this clinic?"></textarea>
                 <button id="submit-review-btn">Submit Review</button>
                 <p id="review-status" style="font-size: 13px; margin-top: 8px;"></p>
             </div>
@@ -248,7 +248,7 @@
 
             if (file.size > 5 * 1024 * 1024) {
                 resumeStatus.style.color = "red";
-                resumeStatus.innerText = "File too large — must be under 5MB.";
+                resumeStatus.innerText = "File too large â€” must be under 5MB.";
                 e.target.value = "";
                 return;
             }
@@ -328,19 +328,19 @@
                 snap.forEach((d) => {
                     const r = d.data();
                     total += r.rating;
-                    const stars = "★".repeat(r.rating) + "☆".repeat(5 - r.rating);
+                    const stars = "â˜…".repeat(r.rating) + "â˜†".repeat(5 - r.rating);
                     const card = document.createElement("div");
                     card.style.cssText = "border-bottom:1px solid #eee; padding:12px 0; font-size:14px;";
                     card.innerHTML = `
                         <div style="color:#D4AF37; font-size:18px; margin-bottom:4px;">${stars}</div>
                         <p style="margin:0 0 4px 0; color:#333;">${escapeHtml(r.reviewText) || ""}</p>
-                        <span style="font-size:12px; color:#aaa;">${escapeHtml(r.studentName) || "Anonymous"} · ${r.timestamp ? new Date(r.timestamp).toLocaleDateString() : ""}</span>
+                        <span style="font-size:12px; color:#aaa;">${escapeHtml(r.studentName) || "Anonymous"} Â· ${r.timestamp ? new Date(r.timestamp).toLocaleDateString() : ""}</span>
                     `;
                     reviewsList.appendChild(card);
                 });
 
                 const avg = (total / snap.size).toFixed(1);
-                const stars = "★".repeat(Math.round(total / snap.size)) + "☆".repeat(5 - Math.round(total / snap.size));
+                const stars = "â˜…".repeat(Math.round(total / snap.size)) + "â˜†".repeat(5 - Math.round(total / snap.size));
                 ratingEl.innerHTML = `${stars} <span style="font-size:16px; color:#555;">${avg} / 5 &nbsp;(${snap.size} review${snap.size !== 1 ? "s" : ""})</span>`;
             } catch (error) {
                 console.error(error);
@@ -377,13 +377,13 @@
             star.addEventListener("mouseover", () => {
                 const val = parseInt(star.dataset.val);
                 document.querySelectorAll(".star").forEach((s) => {
-                    s.innerText = parseInt(s.dataset.val) <= val ? "★" : "☆";
+                    s.innerText = parseInt(s.dataset.val) <= val ? "â˜…" : "â˜†";
                     s.style.color = parseInt(s.dataset.val) <= val ? "#D4AF37" : "#ccc";
                 });
             });
             star.addEventListener("mouseleave", () => {
                 document.querySelectorAll(".star").forEach((s) => {
-                    s.innerText = parseInt(s.dataset.val) <= selectedRating ? "★" : "☆";
+                    s.innerText = parseInt(s.dataset.val) <= selectedRating ? "â˜…" : "â˜†";
                     s.style.color = parseInt(s.dataset.val) <= selectedRating ? "#D4AF37" : "#ccc";
                 });
             });
@@ -424,7 +424,7 @@
                 statusEl.innerText = "Review submitted! Thank you.";
                 document.getElementById("review-text").value = "";
                 selectedRating = 0;
-                document.querySelectorAll(".star").forEach(s => { s.innerText = "☆"; s.style.color = "#ccc"; });
+                document.querySelectorAll(".star").forEach(s => { s.innerText = "â˜†"; s.style.color = "#ccc"; });
                 await loadReviews();
             } catch (err) {
                 statusEl.style.color = "red";
@@ -485,7 +485,7 @@
             statusText.innerText = "Sending request to clinic...";
             statusText.style.color = "var(--primary-green)";
 
-            // studentId comes from the authenticated session, not a typed field —
+            // studentId comes from the authenticated session, not a typed field â€”
             // this is what makes it impossible to submit a request as someone else.
             const requestData = {
                 dentistId: dentistId,
@@ -519,10 +519,11 @@
 
         loadProfile();
     </script>
-    <footer style="background-color: #0A5C36; color: white; text-align: center; padding: 20px; font-size: 13px; margin-top: 60px;">
-        <p style="margin: 0 0 8px 0;">© 2026 PreDentTX. All rights reserved.</p>
+    <footer style="background-color: #0A5C36; color: white; text-align: center; padding: 20px; font-size: 13px;">
+        <p style="margin: 0 0 8px 0;">Â&copy; 2026 PreDentTX. All rights reserved.</p>
         <a href="privacy.html" style="color: #D4AF37; text-decoration: none; margin: 0 10px;">Privacy Policy</a>
         <a href="privacy.html#terms" style="color: #D4AF37; text-decoration: none; margin: 0 10px;">Terms of Service</a>
     </footer>
 </body>
 </html>
+
