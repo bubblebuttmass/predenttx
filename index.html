@@ -19,75 +19,34 @@
             --job-teal: #16817a;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0; padding: 0;
-            background-color: var(--off-white);
-            color: var(--dark-text);
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: var(--off-white); color: var(--dark-text); }
 
-        header {
-            background-color: var(--primary-green);
-            padding: 20px 50px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
+        header { background-color: var(--primary-green); padding: 20px 50px; display: flex; justify-content: space-between; align-items: center; }
         .logo { color: var(--primary-gold); font-size: 28px; font-weight: bold; text-decoration: none; }
         .nav-links { display: flex; align-items: center; }
         .nav-links a { color: white; text-decoration: none; margin-left: 20px; font-weight: bold; }
+        .profile-nav-icon { width: 40px; height: 40px; background-color: #e9ecef; border-radius: 50%; border: 2px solid var(--primary-gold); margin-left: 20px; cursor: pointer; background-size: cover; background-position: center; display: none; }
 
-        .profile-nav-icon {
-            width: 40px; height: 40px; background-color: #e9ecef; border-radius: 50%;
-            border: 2px solid var(--primary-gold); margin-left: 20px; cursor: pointer;
-            background-size: cover; background-position: center; display: none;
-        }
-
-        .hero {
-            background-color: var(--primary-green); color: white; padding: 60px 20px;
-            text-align: center; border-bottom: 8px solid var(--primary-gold);
-        }
+        .hero { background-color: var(--primary-green); color: white; padding: 60px 20px; text-align: center; border-bottom: 8px solid var(--primary-gold); }
         .hero h1 { font-size: 44px; margin-bottom: 10px; }
         .hero p { font-size: 18px; margin-bottom: 30px; color: var(--primary-gold); }
 
         .search-toggle { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; }
-        .toggle-btn {
-            background: rgba(255,255,255,0.1); border: 2px solid var(--primary-gold);
-            color: white; padding: 10px 25px; border-radius: 30px; font-weight: bold;
-            cursor: pointer; transition: 0.3s; font-size: 16px;
-        }
+        .toggle-btn { background: rgba(255,255,255,0.1); border: 2px solid var(--primary-gold); color: white; padding: 10px 25px; border-radius: 30px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 16px; }
         .toggle-btn.active { background: var(--primary-gold); color: var(--dark-text); }
 
-        .search-container {
-            background-color: white; padding: 8px; border-radius: 50px;
-            display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .search-container input[type="text"] {
-            border: none; padding: 12px 20px; font-size: 16px; width: 300px; border-radius: 50px; outline: none;
-        }
-        .search-container button {
-            background-color: var(--primary-gold); color: var(--dark-text);
-            border: none; padding: 12px 25px; font-size: 16px;
-            font-weight: bold; border-radius: 50px; cursor: pointer; transition: 0.3s;
-        }
+        .search-container { background-color: white; padding: 8px; border-radius: 50px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .search-container input[type="text"] { border: none; padding: 12px 20px; font-size: 16px; width: 300px; border-radius: 50px; outline: none; }
+        .search-container button { background-color: var(--primary-gold); color: var(--dark-text); border: none; padding: 12px 25px; font-size: 16px; font-weight: bold; border-radius: 50px; cursor: pointer; transition: 0.3s; }
         .search-container button:hover { background-color: #b5952f; }
 
         .results-section { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
         .results-section h2 { color: var(--primary-green); }
         .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 20px; margin-top: 20px; }
 
-        .clinic-card {
-            background-color: var(--card-bg); border-radius: 8px; padding: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid var(--primary-green);
-            display: flex; flex-direction: column; justify-content: space-between;
-        }
-
+        .clinic-card { background-color: var(--card-bg); border-radius: 8px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid var(--primary-green); display: flex; flex-direction: column; justify-content: space-between; }
         .doctor-identity-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-        .doctor-avatar {
-            width: 50px; height: 50px; border-radius: 50%; object-fit: cover;
-            border: 2px solid var(--primary-gold); background-color: #eee;
-        }
+        .doctor-avatar { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-gold); background-color: #eee; }
         .doctor-meta-text { display: flex; flex-direction: column; }
         .doctor-meta-text h3 { margin: 0; font-size: 18px; color: var(--dark-text); }
         .clinic-specialty { color: var(--primary-green); font-weight: bold; font-size: 13px; margin-top: 2px; }
@@ -101,36 +60,18 @@
         .job-badge { background: var(--job-teal); color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-bottom: 10px; display: inline-block; }
         .job-contact-box { border-left-color: var(--job-teal); }
 
-        .btn-view-profile {
-            background-color: var(--primary-gold); color: var(--dark-text);
-            text-decoration: none; text-align: center; padding: 10px;
-            border-radius: 5px; font-weight: bold; font-size: 14px; transition: 0.2s;
-        }
+        .btn-view-profile { background-color: var(--primary-gold); color: var(--dark-text); text-decoration: none; text-align: center; padding: 10px; border-radius: 5px; font-weight: bold; font-size: 14px; transition: 0.2s; }
         .btn-view-profile:hover { background-color: #b5952f; }
-        .btn-apply-listing {
-            width: 100%; border: none; cursor: pointer; padding: 10px;
-            border-radius: 5px; font-weight: bold; font-size: 14px; color: white;
-            margin-top: 12px; transition: 0.2s;
-        }
+        .btn-apply-listing { width: 100%; border: none; cursor: pointer; padding: 10px; border-radius: 5px; font-weight: bold; font-size: 14px; color: white; margin-top: 12px; transition: 0.2s; }
         .btn-apply-listing.event-flavor { background-color: var(--event-purple); }
         .btn-apply-listing.event-flavor:hover { background-color: #732d91; }
         .btn-apply-listing.job-flavor { background-color: var(--job-teal); }
         .btn-apply-listing.job-flavor:hover { background-color: #106560; }
 
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); z-index: 1000; display: none;
-            justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;
-        }
-        .modal-box {
-            background: white; padding: 25px; border-radius: 12px; width: 100%;
-            max-width: 450px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-        }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+        .modal-box { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
         .modal-box h3 { margin-top: 0; color: var(--primary-green); }
-        .modal-box textarea, .modal-box input[type="file"] {
-            width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc;
-            border-radius: 5px; box-sizing: border-box; font-family: inherit; font-size: 14px;
-        }
+        .modal-box textarea, .modal-box input[type="file"] { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; font-size: 14px; }
         .modal-box button { font-family: inherit; padding: 10px 18px; border: none; border-radius: 5px; font-weight: bold; font-size: 14px; cursor: pointer; color: white; background-color: var(--primary-green); }
         .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 15px; }
         .btn-cancel { background-color: #7f8c8d; }
@@ -161,17 +102,6 @@
             <input type="text" id="search-city" placeholder="What city are you looking in? (e.g., Austin)">
             <button type="button" id="search-btn">Search</button>
         </div>
-        <div id="gpa-filter-row" style="margin-top: 14px; display: flex; justify-content: center; align-items: center; gap: 10px;">
-            <label style="color: white; font-size: 14px; font-weight: bold;">My GPA:</label>
-            <select id="gpa-filter" style="padding: 8px 14px; border-radius: 20px; border: none; font-size: 14px; background: white; color: #0A5C36; cursor: pointer; font-weight: bold; border: 2px solid #D4AF37;">
-                <option value="">Show all clinics</option>
-                <option value="2.5">2.5+</option>
-                <option value="3.0">3.0+</option>
-                <option value="3.3">3.3+</option>
-                <option value="3.5">3.5+</option>
-                <option value="3.7">3.7+</option>
-            </select>
-        </div>
     </div>
 
     <div class="results-section">
@@ -185,7 +115,7 @@
         <div class="modal-box">
             <h3 id="apply-modal-title">Apply</h3>
             <p style="font-size: 13px; color: #666; margin-top: -8px;">Send a quick note and (optionally) your resume.</p>
-            <textarea id="apply-message" rows="4" placeholder="Introduce yourself and explain why you're interested..."></textarea>
+            <textarea id="apply-message" rows="4" placeholder="Introduce yourself and explain why you are interested..."></textarea>
             <label style="font-weight: bold; display: block; margin-bottom: 5px; font-size: 13px;">Resume (optional, PDF or Word):</label>
             <input type="file" id="apply-resume-input" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
             <p id="apply-resume-status" style="font-size: 12px; color: #666; margin: -6px 0 0 0;"></p>
@@ -208,15 +138,15 @@
         const resultsTitle = document.getElementById("results-title");
         const loginBtn = document.getElementById("nav-login-btn");
         const navProfileIcon = document.getElementById("nav-profile-icon");
-
         const toggleClinicsBtn = document.getElementById("toggle-clinics");
         const toggleEventsBtn = document.getElementById("toggle-events");
         const toggleJobsBtn = document.getElementById("toggle-jobs");
+
         let activeSearchMode = "clinics";
         let currentUser = null;
         let applyResumeUrl = "";
-        let activeApplyTarget = null; // { type: 'event'|'job', id, hostId, title }
-        let listingCache = {}; // docId -> { type, hostId, title } â€” avoids putting free text in onclick attributes
+        let activeApplyTarget = null;
+        let listingCache = {};
 
         function setActiveToggle(mode, btn) {
             activeSearchMode = mode;
@@ -224,23 +154,9 @@
             btn.classList.add("active");
         }
 
-        toggleClinicsBtn.addEventListener("click", () => {
-            setActiveToggle("clinics", toggleClinicsBtn);
-            searchInput.placeholder = "Search clinics by city (e.g., Austin)";
-            document.getElementById("gpa-filter-row").style.display = "flex";
-        });
-
-        toggleEventsBtn.addEventListener("click", () => {
-            setActiveToggle("events", toggleEventsBtn);
-            searchInput.placeholder = "Search events by city (e.g., Dallas)";
-            document.getElementById("gpa-filter-row").style.display = "none";
-        });
-
-        toggleJobsBtn.addEventListener("click", () => {
-            setActiveToggle("jobs", toggleJobsBtn);
-            searchInput.placeholder = "Search paid positions by city (e.g., Houston)";
-            document.getElementById("gpa-filter-row").style.display = "none";
-        });
+        toggleClinicsBtn.addEventListener("click", () => { setActiveToggle("clinics", toggleClinicsBtn); searchInput.placeholder = "Search clinics by city (e.g., Austin)"; });
+        toggleEventsBtn.addEventListener("click", () => { setActiveToggle("events", toggleEventsBtn); searchInput.placeholder = "Search events by city (e.g., Dallas)"; });
+        toggleJobsBtn.addEventListener("click", () => { setActiveToggle("jobs", toggleJobsBtn); searchInput.placeholder = "Search paid positions by city (e.g., Houston)"; });
 
         onAuthStateChanged(auth, async (user) => {
             currentUser = user;
@@ -251,13 +167,9 @@
                 let userRole = "student";
                 if (userDoc.exists()) {
                     userRole = userDoc.data().role;
-                    if (userDoc.data().profilePic) {
-                        navProfileIcon.style.backgroundImage = `url('${userDoc.data().profilePic}')`;
-                    }
+                    if (userDoc.data().profilePic) navProfileIcon.style.backgroundImage = `url('${userDoc.data().profilePic}')`;
                 }
-                navProfileIcon.onclick = () => {
-                    window.location.href = userRole === "student" ? "student-profile.html" : "dentist-dashboard.html";
-                };
+                navProfileIcon.onclick = () => { window.location.href = userRole === "student" ? "student-profile.html" : "dentist-dashboard.html"; };
             } else {
                 loginBtn.style.display = "block";
                 navProfileIcon.style.display = "none";
@@ -272,50 +184,30 @@
             resultsTitle.innerText = `Results for "${searchInput.value}"`;
             listingCache = {};
 
-            // Firestore can't do real substring search, but a range query on a
-            // sorted field gives us "starts with" matching â€” a real improvement
-            // over the old exact-match-only query, which failed on anything
-            // that wasn't a perfect lowercase match (e.g. "Austin, TX" or a typo).
             const prefixEnd = cityQuery + '\uf8ff';
 
             try {
                 if (activeSearchMode === "clinics") {
-                    const q = query(
-                        collection(db, "dentist_profiles"),
-                        where("city", ">=", cityQuery),
-                        where("city", "<=", prefixEnd)
-                    );
+                    const q = query(collection(db, "dentist_profiles"), where("city", ">=", cityQuery), where("city", "<=", prefixEnd));
                     const querySnapshot = await getDocs(q);
                     resultsContainer.innerHTML = "";
 
-                    if (querySnapshot.empty) {
-                        resultsContainer.innerHTML = "<p>No clinics found in this city yet.</p>";
-                        return;
-                    }
-
-                    const myGPA = parseFloat(document.getElementById("gpa-filter").value) || 0;
-                    let shown = 0;
+                    if (querySnapshot.empty) { resultsContainer.innerHTML = "<p>No clinics found in this city yet.</p>"; return; }
 
                     querySnapshot.forEach((docSnap) => {
                         const clinic = docSnap.data();
-
-                        // GPA filter: skip clinics whose minimum exceeds the student's selected GPA
-                        if (myGPA > 0 && clinic.minGPA && parseFloat(clinic.minGPA) > myGPA) return;
-
-                        shown++;
                         const card = document.createElement("div");
                         card.className = "clinic-card";
 
                         const clinicImage = clinic.clinicImage || "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=400";
                         const avatarImage = clinic.doctorProfilePic || `https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=${docSnap.id}`;
-                        const gpaTag = clinic.minGPA ? `<span style="font-size:12px; background:#eaf2ee; color:#0A5C36; border-radius:10px; padding:2px 8px; margin-left:6px; font-weight:bold;">Min GPA ${escapeHtml(clinic.minGPA)}</span>` : "";
 
                         card.innerHTML = `
                             <div style="background-image: url('${escapeHtml(clinicImage)}'); background-size: cover; background-position: center; height: 150px; border-radius: 6px; margin-bottom: 15px;"></div>
                             <div class="doctor-identity-row">
                                 <img class="doctor-avatar" src="${escapeHtml(avatarImage)}" alt="Doctor Profile">
                                 <div class="doctor-meta-text">
-                                    <h3>${escapeHtml(clinic.clinicName) || ""}${gpaTag}</h3>
+                                    <h3>${escapeHtml(clinic.clinicName) || ""}</h3>
                                     <span class="clinic-specialty">${escapeHtml(clinic.doctorName) || ""} | ${escapeHtml(clinic.specialty) || ""}</span>
                                 </div>
                             </div>
@@ -325,53 +217,33 @@
                         `;
                         resultsContainer.appendChild(card);
 
-                        // Load this clinic's average rating asynchronously
                         getDocs(query(collection(db, "reviews"), where("dentistId", "==", docSnap.id))).then(revSnap => {
                             const el = document.getElementById(`rating-${docSnap.id}`);
                             if (!el || revSnap.empty) return;
                             const total = revSnap.docs.reduce((sum, d) => sum + d.data().rating, 0);
                             const avg = (total / revSnap.size).toFixed(1);
-                            el.innerText = `â˜… ${avg} (${revSnap.size} review${revSnap.size !== 1 ? "s" : ""})`;
+                            el.innerText = `★ ${avg} (${revSnap.size} review${revSnap.size !== 1 ? "s" : ""})`;
                         });
                     });
 
-                    if (shown === 0) {
-                        resultsContainer.innerHTML = "<p>No clinics match your GPA filter in this city. Try removing the filter or searching another city.</p>";
-                    }
-
                 } else if (activeSearchMode === "events") {
-                    const q = query(
-                        collection(db, "events"),
-                        where("city", ">=", cityQuery),
-                        where("city", "<=", prefixEnd),
-                        orderBy("city"),
-                        orderBy("eventDate", "asc")
-                    );
+                    const q = query(collection(db, "events"), where("city", ">=", cityQuery), where("city", "<=", prefixEnd), orderBy("city"), orderBy("eventDate", "asc"));
                     const querySnapshot = await getDocs(q);
                     resultsContainer.innerHTML = "";
 
                     const now = new Date();
-                    const upcoming = querySnapshot.docs.filter(d => {
-                        const ev = d.data();
-                        return ev.eventDate && ev.eventDate.toDate() >= now;
-                    });
+                    const upcoming = querySnapshot.docs.filter(d => { const ev = d.data(); return ev.eventDate && ev.eventDate.toDate() >= now; });
 
-                    if (upcoming.length === 0) {
-                        resultsContainer.innerHTML = "<p>No upcoming events posted in this city yet.</p>";
-                        return;
-                    }
+                    if (upcoming.length === 0) { resultsContainer.innerHTML = "<p>No upcoming events posted in this city yet.</p>"; return; }
 
                     upcoming.forEach((docSnap) => {
                         const eventData = docSnap.data();
                         const card = document.createElement("div");
                         card.className = "clinic-card event-card";
-
                         listingCache[docSnap.id] = { type: "event", hostId: eventData.hostId, title: eventData.title };
 
                         const eventImage = eventData.eventImage || "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80&w=400";
-                        const formattedDate = eventData.eventDate.toDate().toLocaleString('en-US', {
-                            weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
-                        });
+                        const formattedDate = eventData.eventDate.toDate().toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
                         card.innerHTML = `
                             <div style="background-image: url('${escapeHtml(eventImage)}'); background-size: cover; background-position: center; height: 150px; border-radius: 6px; margin-bottom: 10px;"></div>
@@ -379,15 +251,10 @@
                                 <span class="event-badge">Community Event</span>
                                 <h3 style="margin-bottom: 5px; color: var(--primary-green);">${escapeHtml(eventData.title)}</h3>
                                 <p style="font-size: 13px; color: #888; margin: 0 0 10px 0;">Hosted by: <strong>${escapeHtml(eventData.hostName) || ""}</strong></p>
-
-                                <p class="event-detail">ðŸ“… <strong>Date/Time:</strong> ${formattedDate}</p>
-                                <p class="event-detail">ðŸ“ <strong>Location:</strong> ${escapeHtml(eventData.location) || ""}</p>
+                                <p class="event-detail">📅 <strong>Date/Time:</strong> ${formattedDate}</p>
+                                <p class="event-detail">📍 <strong>Location:</strong> ${escapeHtml(eventData.location) || ""}</p>
                                 <p style="font-size: 14px; color: #444; margin-top: 10px; line-height: 1.4;">${escapeHtml(eventData.description) || ""}</p>
-
-                                <div class="event-contact-box">
-                                    <strong>Contact for info/RSVP:</strong><br>
-                                    ${escapeHtml(eventData.contactInfo) || ""}
-                                </div>
+                                <div class="event-contact-box"><strong>Contact for info/RSVP:</strong><br>${escapeHtml(eventData.contactInfo) || ""}</div>
                                 <button class="btn-apply-listing event-flavor" id="rsvp-btn-${docSnap.id}" onclick="rsvpToEvent('${docSnap.id}')">RSVP</button>
                             </div>
                         `;
@@ -395,24 +262,16 @@
                     });
 
                 } else {
-                    const q = query(
-                        collection(db, "jobs"),
-                        where("city", ">=", cityQuery),
-                        where("city", "<=", prefixEnd)
-                    );
+                    const q = query(collection(db, "jobs"), where("city", ">=", cityQuery), where("city", "<=", prefixEnd));
                     const querySnapshot = await getDocs(q);
                     resultsContainer.innerHTML = "";
 
-                    if (querySnapshot.empty) {
-                        resultsContainer.innerHTML = "<p>No paid positions posted in this city yet.</p>";
-                        return;
-                    }
+                    if (querySnapshot.empty) { resultsContainer.innerHTML = "<p>No paid positions posted in this city yet.</p>"; return; }
 
                     querySnapshot.forEach((docSnap) => {
                         const job = docSnap.data();
                         const card = document.createElement("div");
                         card.className = "clinic-card job-card";
-
                         listingCache[docSnap.id] = { type: "job", hostId: job.hostId, title: job.title };
 
                         card.innerHTML = `
@@ -420,17 +279,12 @@
                                 <span class="job-badge">${escapeHtml(job.jobType) || "Paid Position"}</span>
                                 <h3 style="margin-bottom: 5px; color: var(--primary-green);">${escapeHtml(job.title)}</h3>
                                 <p style="font-size: 13px; color: #888; margin: 0 0 10px 0;">Hiring at: <strong>${escapeHtml(job.hostName) || ""}</strong></p>
-
-                                ${job.payRate ? `<p class="event-detail">ðŸ’µ <strong>Pay:</strong> ${escapeHtml(job.payRate)}</p>` : ""}
-                                ${job.schedule ? `<p class="event-detail">ðŸ• <strong>Schedule:</strong> ${escapeHtml(job.schedule)}</p>` : ""}
-                                <p class="event-detail">ðŸ“ <strong>Location:</strong> ${escapeHtml(job.location) || ""}</p>
+                                ${job.payRate ? `<p class="event-detail">💵 <strong>Pay:</strong> ${escapeHtml(job.payRate)}</p>` : ""}
+                                ${job.schedule ? `<p class="event-detail">🕐 <strong>Schedule:</strong> ${escapeHtml(job.schedule)}</p>` : ""}
+                                <p class="event-detail">📍 <strong>Location:</strong> ${escapeHtml(job.location) || ""}</p>
                                 <p style="font-size: 14px; color: #444; margin-top: 10px; line-height: 1.4;">${escapeHtml(job.description) || ""}</p>
                                 ${job.qualifications ? `<p style="font-size: 13px; color: #666; margin-top: 8px;"><strong>Preferred Qualifications:</strong> ${escapeHtml(job.qualifications)}</p>` : ""}
-
-                                <div class="event-contact-box job-contact-box">
-                                    <strong>How to Apply:</strong><br>
-                                    ${escapeHtml(job.contactInfo) || ""}
-                                </div>
+                                <div class="event-contact-box job-contact-box"><strong>How to Apply:</strong><br>${escapeHtml(job.contactInfo) || ""}</div>
                                 <button class="btn-apply-listing job-flavor" onclick="openApplyModal('${docSnap.id}')">Apply / Send Resume</button>
                             </div>
                         `;
@@ -442,17 +296,10 @@
             }
         });
 
-        // --- Apply modal: Jobs only now. Events are a one-click RSVP, no form needed. ---
-
         window.openApplyModal = (id) => {
-            if (!currentUser) {
-                alert("Please log in first to apply.");
-                window.location.href = "login.html";
-                return;
-            }
+            if (!currentUser) { alert("Please log in first to apply."); window.location.href = "login.html"; return; }
             const target = listingCache[id];
             if (!target) return;
-
             activeApplyTarget = { ...target, id };
             document.getElementById("apply-modal-title").innerText = `Apply: ${target.title}`;
             document.getElementById("apply-message").value = "";
@@ -464,28 +311,14 @@
         };
 
         window.rsvpToEvent = async (id) => {
-            if (!currentUser) {
-                alert("Please log in first to RSVP.");
-                window.location.href = "login.html";
-                return;
-            }
+            if (!currentUser) { alert("Please log in first to RSVP."); window.location.href = "login.html"; return; }
             const target = listingCache[id];
             if (!target) return;
-
             const btn = document.getElementById(`rsvp-btn-${id}`);
             if (btn) { btn.disabled = true; btn.innerText = "Sending RSVP..."; }
-
             try {
-                const newAppRef = await addDoc(collection(db, "event_applications"), {
-                    hostId: target.hostId,
-                    studentId: currentUser.uid,
-                    studentEmail: currentUser.email,
-                    eventId: id,
-                    eventTitle: target.title,
-                    status: "pending",
-                    timestamp: new Date().toISOString()
-                });
-                if (btn) { btn.innerText = "RSVP Sent âœ“"; }
+                const newAppRef = await addDoc(collection(db, "event_applications"), { hostId: target.hostId, studentId: currentUser.uid, studentEmail: currentUser.email, eventId: id, eventTitle: target.title, status: "pending", timestamp: new Date().toISOString() });
+                if (btn) { btn.innerText = "RSVP Sent ✓"; }
                 notify({ type: "event_application", docId: newAppRef.id });
             } catch (err) {
                 if (btn) { btn.disabled = false; btn.innerText = "RSVP"; }
@@ -493,81 +326,43 @@
             }
         };
 
-        document.getElementById("apply-modal-cancel").addEventListener("click", () => {
-            document.getElementById("apply-modal").style.display = "none";
-        });
+        document.getElementById("apply-modal-cancel").addEventListener("click", () => { document.getElementById("apply-modal").style.display = "none"; });
 
         document.getElementById("apply-resume-input").addEventListener("change", async (e) => {
             const file = e.target.files[0];
             const status = document.getElementById("apply-resume-status");
             if (!file) return;
-
-            if (file.size > 5 * 1024 * 1024) {
-                status.style.color = "red";
-                status.innerText = "File too large â€” must be under 5MB.";
-                e.target.value = "";
-                return;
-            }
-
-            status.style.color = "#666";
-            status.innerText = "Uploading resume...";
-            try {
-                applyResumeUrl = await uploadMedia(currentUser.uid, "resume", file);
-                status.style.color = "var(--primary-green)";
-                status.innerText = `Attached: ${file.name}`;
-            } catch (err) {
-                status.style.color = "red";
-                status.innerText = "Upload failed: " + err.message;
-            }
+            if (file.size > 5 * 1024 * 1024) { status.style.color = "red"; status.innerText = "File too large — must be under 5MB."; e.target.value = ""; return; }
+            status.style.color = "#666"; status.innerText = "Uploading resume...";
+            try { applyResumeUrl = await uploadMedia(currentUser.uid, "resume", file); status.style.color = "var(--primary-green)"; status.innerText = `Attached: ${file.name}`; }
+            catch (err) { status.style.color = "red"; status.innerText = "Upload failed: " + err.message; }
         });
 
         document.getElementById("apply-modal-submit").addEventListener("click", async () => {
             const statusEl = document.getElementById("apply-modal-status");
             const submitBtn = document.getElementById("apply-modal-submit");
             const message = document.getElementById("apply-message").value.trim();
-
             if (!activeApplyTarget || !currentUser) return;
-
             submitBtn.disabled = true;
             statusEl.style.color = "var(--primary-green)";
             statusEl.innerText = "Submitting...";
-
             const collectionName = activeApplyTarget.type === "event" ? "event_applications" : "job_applications";
-            const payload = {
-                hostId: activeApplyTarget.hostId,
-                studentId: currentUser.uid,
-                studentEmail: currentUser.email,
-                message,
-                resumeUrl: applyResumeUrl,
-                status: "pending",
-                timestamp: new Date().toISOString()
-            };
-            if (activeApplyTarget.type === "event") {
-                payload.eventId = activeApplyTarget.id;
-                payload.eventTitle = activeApplyTarget.title;
-            } else {
-                payload.jobId = activeApplyTarget.id;
-                payload.jobTitle = activeApplyTarget.title;
-            }
-
+            const payload = { hostId: activeApplyTarget.hostId, studentId: currentUser.uid, studentEmail: currentUser.email, message, resumeUrl: applyResumeUrl, status: "pending", timestamp: new Date().toISOString() };
+            if (activeApplyTarget.type === "event") { payload.eventId = activeApplyTarget.id; payload.eventTitle = activeApplyTarget.title; }
+            else { payload.jobId = activeApplyTarget.id; payload.jobTitle = activeApplyTarget.title; }
             try {
                 const newAppRef = await addDoc(collection(db, collectionName), payload);
                 statusEl.innerText = "Application sent!";
                 setTimeout(() => { document.getElementById("apply-modal").style.display = "none"; }, 1200);
                 notify({ type: activeApplyTarget.type === "event" ? "event_application" : "job_application", docId: newAppRef.id });
-            } catch (err) {
-                statusEl.style.color = "red";
-                statusEl.innerText = "Error: " + err.message;
-            } finally {
-                submitBtn.disabled = false;
-            }
+            } catch (err) { statusEl.style.color = "red"; statusEl.innerText = "Error: " + err.message; }
+            finally { submitBtn.disabled = false; }
         });
     </script>
     <footer style="background-color: #0A5C36; color: white; text-align: center; padding: 20px; font-size: 13px; margin-top: 60px;">
-        <p style="margin: 0 0 8px 0;">Â© 2026 PreDentTX. All rights reserved.</p>
+        <p style="margin: 0 0 8px 0;">© 2026 PreDentTX. All rights reserved.</p>
         <a href="privacy.html" style="color: #D4AF37; text-decoration: none; margin: 0 10px;">Privacy Policy</a>
         <a href="privacy.html#terms" style="color: #D4AF37; text-decoration: none; margin: 0 10px;">Terms of Service</a>
     </footer>
 </body>
 </html>
-
