@@ -178,7 +178,8 @@
             const card = document.createElement("div");
             card.className = "job-card";
             const applyBtn = job.acceptsResume ? `<button class="btn-apply" onclick="openApply('${job.id}')">Apply on PreDentTX</button>` : "";
-            const hotlinkBtn = job.hotlink ? `<a href="${escapeHtml(job.hotlink)}" target="_blank" rel="noopener" class="btn-hotlink">View Original Listing</a>` : "";
+            const hotlinkUrl = job.hotlink ? ((/^https?:\/\//i.test(job.hotlink)) ? job.hotlink : "https://" + job.hotlink) : "";
+            const hotlinkBtn = hotlinkUrl ? `<a href="${escapeHtml(hotlinkUrl)}" target="_blank" rel="noopener" class="btn-hotlink">View Original Listing</a>` : "";
             card.innerHTML = `
                 <span class="job-type-badge">${escapeHtml(job.jobType) || "Dental Position"}</span>
                 <p class="job-title">${escapeHtml(job.title)}</p>
@@ -250,3 +251,4 @@
 </script>
 </body>
 </html>
+
