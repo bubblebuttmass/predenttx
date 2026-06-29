@@ -3,226 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PreDentTX | Login</title>
+    <title>PreDentTX | Sign In</title>
     <style>
-        :root {
-            --primary-green: #0A5C36;
-            --primary-gold: #D4AF37;
-            --off-white: #F8F9FA;
-            --dark-text: #333333;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: var(--off-white);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .login-box {
-            background-color: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-            border-top: 8px solid var(--primary-green);
-        }
-
-        .login-box h1 { color: var(--primary-green); margin-bottom: 5px; }
-        .login-box p { color: #666; margin-bottom: 30px; }
-
-        input, select {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--primary-green);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-            margin-bottom: 10px;
-        }
-
-        button:hover { background-color: #074226; }
-        button:disabled { background-color: #aaa; cursor: not-allowed; }
-        .btn-secondary { background-color: var(--primary-gold); color: var(--dark-text); }
-        .btn-secondary:hover { background-color: #b5952f; }
-
-        .forgot-link {
-            display: inline-block; margin-top: 5px; font-size: 13px;
-            color: var(--primary-green); text-decoration: none; cursor: pointer;
-        }
-        .forgot-link:hover { text-decoration: underline; }
-
-        #status-message { font-size: 14px; margin-top: 15px; min-height: 18px; }
-        #status-message.error { color: #c0392b; }
-        #status-message.success { color: var(--primary-green); }
+        :root { --green: #0A5C36; --gold: #D4AF37; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #F8F9FA; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; border-top: 8px solid var(--green); }
+        .logo { color: var(--green); font-size: 28px; font-weight: 700; text-decoration: none; display: block; margin-bottom: 6px; }
+        .sub { color: #888; font-size: 14px; margin-bottom: 28px; }
+        input { width: 100%; padding: 12px; margin-bottom: 14px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 6px; font-size: 15px; font-weight: 700; cursor: pointer; margin-bottom: 10px; }
+        .btn-login { background: var(--green); color: white; }
+        .btn-signup { background: var(--gold); color: #333; }
+        button:disabled { background: #aaa; cursor: not-allowed; }
+        .link { display: inline-block; margin-top: 6px; font-size: 13px; color: var(--green); cursor: pointer; text-decoration: underline; }
+        #status { font-size: 13px; min-height: 18px; margin-top: 12px; }
+        #status.error { color: #c0392b; }
+        #status.success { color: var(--green); }
+        .legal { font-size: 11px; color: #bbb; margin-top: 14px; }
+        .legal a { color: var(--green); }
     </style>
 </head>
 <body>
+<div class="box">
+    <a href="index.html" class="logo">PreDentTX</a>
+    <p class="sub">Student Portal</p>
+    <input type="email" id="email" placeholder="Email address" autocomplete="email">
+    <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+    <button class="btn-login" id="login-btn">Log In</button>
+    <button class="btn-signup" id="signup-btn">Create Student Account</button>
+    <a class="link" id="forgot-link">Forgot password?</a><br>
+    <a class="link" id="resend-link" style="display:none;">Resend verification email</a>
+    <p id="status"></p>
+    <p class="legal">By creating an account you agree to our <a href="privacy.html">Privacy Policy</a> and <a href="privacy.html#terms">Terms of Service</a>.</p>
+</div>
+<script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+    import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
-    <div class="login-box">
-        <h1>PreDentTX</h1>
-        <p>Secure Portal Login</p>
+    const ADMIN_UIDS = ["dIuXc604onXcz7OEEFdmNu8EGhJ3", "9VVH0EkxXpNO8dJKyP3C4dKmkbt1"];
+    const emailEl = document.getElementById("email");
+    const passwordEl = document.getElementById("password");
+    const statusEl = document.getElementById("status");
+    const resendLink = document.getElementById("resend-link");
+    let pendingUser = null;
 
-        <select id="user-role">
-            <option value="student">I am a Predental Student</option>
-            <option value="dentist">I am a Dentist / Orthodontist</option>
-        </select>
+    function setStatus(msg, type) { statusEl.innerText = msg; statusEl.className = type || ""; }
+    function setBusy(b) { document.getElementById("login-btn").disabled = b; document.getElementById("signup-btn").disabled = b; }
 
-        <input type="email" id="email" placeholder="Email Address" autocomplete="email">
-        <input type="password" id="password" placeholder="Password" autocomplete="current-password">
-
-        <button id="login-btn">Log In</button>
-        <button id="signup-btn" class="btn-secondary">Create Account</button>
-
-        <a class="forgot-link" id="forgot-link">Forgot your password?</a>
-        <br>
-        <a class="forgot-link" id="resend-link" style="display:none;">Resend verification email</a>
-
-        <p id="status-message"></p>
-        <p style="font-size: 12px; color: #aaa; margin-top: 5px;">By creating an account you agree to our <a href="privacy.html" style="color: #0A5C36;">Privacy Policy</a> and <a href="privacy.html#terms" style="color: #0A5C36;">Terms of Service</a>.</p>
-    </div>
-
-    <script type="module">
-        import { auth, db } from './firebase-config.js';
-        import {
-            createUserWithEmailAndPassword,
-            signInWithEmailAndPassword,
-            sendEmailVerification,
-            sendPasswordResetEmail
-        } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-        import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
-
-        const roleInput = document.getElementById("user-role");
-        const emailInput = document.getElementById("email");
-        const passwordInput = document.getElementById("password");
-        const statusMessage = document.getElementById("status-message");
-        const loginBtn = document.getElementById("login-btn");
-        const signupBtn = document.getElementById("signup-btn");
-
-        const resendLink = document.getElementById("resend-link");
-        let pendingUnverifiedUser = null;
-
-        function setStatus(text, type) {
-            statusMessage.innerText = text;
-            statusMessage.className = type || "";
-        }
-        function setBusy(busy) {
-            loginBtn.disabled = busy;
-            signupBtn.disabled = busy;
-        }
-
-        async function routeToDashboard(uid) {
-            const userDoc = await getDoc(doc(db, "users", uid));
-            const role = userDoc.exists() ? userDoc.data().role : "student";
-            window.location.href = role === "dentist" ? "dentist-dashboard.html" : "student-profile.html";
-        }
-
-        signupBtn.addEventListener("click", async () => {
-            const email = emailInput.value.trim();
-            const password = passwordInput.value;
-            const role = roleInput.value;
-
-            if (!email || !password) { setStatus("Please fill in all fields.", "error"); return; }
-            if (password.length < 6) { setStatus("Password must be at least 6 characters.", "error"); return; }
-
-            setBusy(true);
-            setStatus("Creating account...", "");
-
-            try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-
-                await setDoc(doc(db, "users", user.uid), { email, role });
-                await sendEmailVerification(user);
-
-                setStatus("Account created! Check your email to verify your address — if you don't see it within a minute, check your spam or junk folder. Once verified, log in below.", "success");
-                emailInput.value = "";
-                passwordInput.value = "";
-            } catch (error) {
-                setStatus(error.message, "error");
-            } finally {
-                setBusy(false);
+    document.getElementById("login-btn").addEventListener("click", async () => {
+        const email = emailEl.value.trim();
+        const password = passwordEl.value;
+        if (!email || !password) { setStatus("Please fill in all fields.", "error"); return; }
+        setBusy(true); setStatus("Logging in...");
+        try {
+            const cred = await signInWithEmailAndPassword(auth, email, password);
+            const user = cred.user;
+            if (!user.emailVerified) {
+                setStatus("Please verify your email first. Check your inbox and spam folder.", "error");
+                pendingUser = user; resendLink.style.display = "inline"; setBusy(false); return;
             }
-        });
+            window.location.href = ADMIN_UIDS.includes(user.uid) ? "admin.html" : "student-profile.html";
+        } catch { setStatus("Wrong email or password.", "error"); setBusy(false); }
+    });
 
-        loginBtn.addEventListener("click", async () => {
-            const email = emailInput.value.trim();
-            const password = passwordInput.value;
+    document.getElementById("signup-btn").addEventListener("click", async () => {
+        const email = emailEl.value.trim();
+        const password = passwordEl.value;
+        if (!email || !password) { setStatus("Please fill in all fields.", "error"); return; }
+        if (password.length < 6) { setStatus("Password must be at least 6 characters.", "error"); return; }
+        setBusy(true); setStatus("Creating account...");
+        try {
+            const cred = await createUserWithEmailAndPassword(auth, email, password);
+            await setDoc(doc(db, "users", cred.user.uid), { email, role: "student" });
+            await sendEmailVerification(cred.user);
+            setStatus("Account created! Check your email to verify — check spam if you do not see it within a minute.", "success");
+            emailEl.value = ""; passwordEl.value = "";
+        } catch (err) { setStatus(err.message, "error"); }
+        finally { setBusy(false); }
+    });
 
-            if (!email || !password) { setStatus("Please fill in all fields.", "error"); return; }
+    resendLink.addEventListener("click", async () => {
+        if (!pendingUser) return;
+        try { await sendEmailVerification(pendingUser); setStatus("Sent! Check your inbox and spam.", "success"); }
+        catch (err) { setStatus(err.message, "error"); }
+    });
 
-            setBusy(true);
-            setStatus("Logging in...", "");
-            resendLink.style.display = "none";
-
-            try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-
-                if (!user.emailVerified) {
-                    setStatus("Please verify your email before logging in — check spam, or click below to resend.", "error");
-                    pendingUnverifiedUser = user;
-                    resendLink.style.display = "inline-block";
-                    setBusy(false);
-                    return;
-                }
-
-                await routeToDashboard(user.uid);
-            } catch (error) {
-                setStatus("Wrong email or password.", "error");
-                setBusy(false);
-            }
-        });
-
-        resendLink.addEventListener("click", async () => {
-            if (!pendingUnverifiedUser) return;
-            setStatus("Sending a new verification email...", "");
-            try {
-                await sendEmailVerification(pendingUnverifiedUser);
-                setStatus("Sent! Check your inbox (and spam folder) in a minute or two.", "success");
-            } catch (error) {
-                setStatus(error.message, "error");
-            }
-        });
-
-        document.getElementById("forgot-link").addEventListener("click", async () => {
-            const email = emailInput.value.trim();
-            if (!email) {
-                setStatus("Type your email above first, then click 'Forgot your password?'", "error");
-                return;
-            }
-            setStatus("Sending reset link...", "");
-            try {
-                await sendPasswordResetEmail(auth, email, {
-                    url: window.location.origin + "/reset-password.html",
-                    handleCodeInApp: true
-                });
-                setStatus("Check your email for a password reset link.", "success");
-            } catch (error) {
-                setStatus(error.message, "error");
-            }
-        });
-    </script>
+    document.getElementById("forgot-link").addEventListener("click", async () => {
+        const email = emailEl.value.trim();
+        if (!email) { setStatus("Enter your email above first.", "error"); return; }
+        try { await sendPasswordResetEmail(auth, email); setStatus("Password reset link sent!", "success"); }
+        catch (err) { setStatus(err.message, "error"); }
+    });
+</script>
 </body>
 </html>
-

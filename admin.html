@@ -1,0 +1,292 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PreDentTX | Admin</title>
+    <style>
+        :root { --green: #0A5C36; --gold: #D4AF37; --off-white: #F8F9FA; --dark: #333; --red: #e74c3c; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--off-white); color: var(--dark); }
+        header { background: var(--green); padding: 16px 36px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { color: var(--gold); font-size: 24px; font-weight: 700; text-decoration: none; }
+        .admin-badge { background: var(--gold); color: #333; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 12px; }
+        header a { color: white; text-decoration: none; font-weight: 600; cursor: pointer; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 28px 20px 60px; }
+        .form-card { background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); padding: 26px; margin-bottom: 28px; border-top: 5px solid var(--gold); }
+        .form-card h2 { margin: 0 0 20px; font-size: 20px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
+        .full { grid-column: 1 / -1; }
+        .field { display: flex; flex-direction: column; }
+        label { font-size: 13px; font-weight: 600; color: #555; display: block; margin-bottom: 4px; }
+        input, select, textarea { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; font-family: inherit; font-size: 14px; }
+        textarea { resize: vertical; }
+        .checkbox-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; grid-column: 1/-1; }
+        .checkbox-row input[type="checkbox"] { width: auto; }
+        .form-actions { display: flex; gap: 10px; margin-top: 16px; }
+        .btn-post { background: var(--green); color: white; border: none; padding: 11px 24px; border-radius: 6px; font-weight: 700; font-size: 15px; cursor: pointer; }
+        .btn-post:disabled { background: #aaa; cursor: not-allowed; }
+        .btn-clear { background: #888; color: white; border: none; padding: 11px 18px; border-radius: 6px; font-weight: 700; cursor: pointer; }
+        #form-status { font-weight: 700; font-size: 14px; margin-top: 10px; }
+        .tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 2px solid #ddd; }
+        .tab-btn { background: none; border: none; padding: 10px 20px; font-weight: 700; color: #888; cursor: pointer; border-bottom: 3px solid transparent; font-size: 15px; margin-bottom: -2px; font-family: inherit; }
+        .tab-btn.active { color: var(--green); border-bottom-color: var(--gold); }
+        .listing-card { background: white; border-radius: 8px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); padding: 18px 20px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+        .listing-info h4 { margin: 0 0 3px; font-size: 17px; }
+        .listing-info p { margin: 0; font-size: 13px; color: #777; }
+        .listing-info a { font-size: 12px; color: var(--green); }
+        .listing-actions { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
+        .btn-edit { background: none; border: 2px solid var(--green); color: var(--green); padding: 7px 14px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 13px; }
+        .btn-delete { background: none; border: 2px solid var(--red); color: var(--red); padding: 7px 14px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 13px; }
+        .btn-toggle { background: none; border: 2px solid #aaa; color: #777; padding: 7px 14px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 13px; }
+        .badge-active { background: #eaf2ee; color: var(--green); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-left: 6px; }
+        .badge-hidden { background: #eee; color: #aaa; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-left: 6px; }
+        .app-card { background: white; border-radius: 8px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); padding: 16px 20px; margin-bottom: 10px; }
+        .app-card h4 { margin: 0 0 4px; font-size: 15px; }
+        .app-card p { margin: 0 0 3px; font-size: 13px; color: #666; }
+        .app-meta { font-size: 12px; color: #aaa; margin-top: 6px; }
+        .empty { color: #aaa; font-style: italic; text-align: center; padding: 30px; }
+        #employer-email-field { display: none; }
+    </style>
+</head>
+<body>
+<header>
+    <a href="index.html" class="logo">PreDentTX</a>
+    <div style="display:flex; align-items:center; gap:16px;">
+        <span class="admin-badge">ADMIN</span>
+        <a id="logout-btn">Logout</a>
+    </div>
+</header>
+<div class="container">
+    <div class="form-card">
+        <h2 id="form-title">Post New Listing</h2>
+        <div class="form-grid">
+            <div class="field"><label>Job Title *</label><input type="text" id="f-title" placeholder="e.g., Dental Assistant"></div>
+            <div class="field"><label>Employer / Clinic Name *</label><input type="text" id="f-employer" placeholder="e.g., Austin Family Dental"></div>
+            <div class="field">
+                <label>Job Type</label>
+                <select id="f-job-type">
+                    <option value="">Select type...</option>
+                    <option>Dental Assistant</option><option>Sterile Technician</option>
+                    <option>Front Desk / Receptionist</option><option>Hygienist</option>
+                    <option>Office Manager</option><option>Other</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Schedule</label>
+                <select id="f-schedule">
+                    <option value="">Select...</option>
+                    <option>Full-Time</option><option>Part-Time</option><option>PRN / As Needed</option>
+                </select>
+            </div>
+            <div class="field"><label>Pay Rate</label><input type="text" id="f-pay" placeholder="e.g., $18-22/hr"></div>
+            <div class="field"><label>City * (used for search)</label><input type="text" id="f-city" placeholder="e.g., Austin"></div>
+            <div class="field full"><label>Full Location / Address</label><input type="text" id="f-location" placeholder="e.g., 123 Main St, Suite 200, Austin TX"></div>
+            <div class="field full"><label>Job Description</label><textarea id="f-description" rows="4" placeholder="Describe the role and responsibilities..."></textarea></div>
+            <div class="field full"><label>Requirements</label><textarea id="f-requirements" rows="3" placeholder="Experience, certifications, qualifications..."></textarea></div>
+            <div class="field full"><label>Original Listing URL (hotlink)</label><input type="url" id="f-hotlink" placeholder="https://www.indeed.com/viewjob?jk=..."></div>
+            <div class="checkbox-row">
+                <input type="checkbox" id="f-accepts-resume" onchange="toggleEmailField()">
+                <label for="f-accepts-resume" style="margin:0; cursor:pointer; font-size:14px;">Accept resumes through PreDentTX (employer gave permission)</label>
+            </div>
+            <div class="field full" id="employer-email-field">
+                <label>Employer Email (private — never shown to students)</label>
+                <input type="email" id="f-employer-email" placeholder="hiring@clinic.com">
+            </div>
+            <div class="checkbox-row">
+                <input type="checkbox" id="f-active" checked>
+                <label for="f-active" style="margin:0; cursor:pointer; font-size:14px;">Active (visible to students)</label>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button class="btn-post" id="post-btn">Post Listing</button>
+            <button class="btn-clear" id="clear-btn">Clear Form</button>
+        </div>
+        <p id="form-status"></p>
+        <input type="hidden" id="editing-id">
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" id="tab-listings">Listings (<span id="listing-count">0</span>)</button>
+        <button class="tab-btn" id="tab-applications">Applications (<span id="app-count">0</span>)</button>
+    </div>
+    <div id="panel-listings"><div id="listings-container"><p class="empty">Loading...</p></div></div>
+    <div id="panel-applications" style="display:none;"><div id="applications-container"><p class="empty">Loading...</p></div></div>
+</div>
+
+<script type="module">
+    import { auth, db, escapeHtml } from './firebase-config.js';
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+    import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+
+    const ADMIN_UIDS = ["dIuXc604onXcz7OEEFdmNu8EGhJ3", "9VVH0EkxXpNO8dJKyP3C4dKmkbt1"];
+
+    onAuthStateChanged(auth, (user) => {
+        if (!user || !ADMIN_UIDS.includes(user.uid)) { alert("Access denied."); window.location.href = "index.html"; return; }
+        loadListings();
+        loadApplications();
+    });
+
+    document.getElementById("tab-listings").addEventListener("click", () => {
+        document.getElementById("panel-listings").style.display = "block";
+        document.getElementById("panel-applications").style.display = "none";
+        document.getElementById("tab-listings").classList.add("active");
+        document.getElementById("tab-applications").classList.remove("active");
+    });
+    document.getElementById("tab-applications").addEventListener("click", () => {
+        document.getElementById("panel-listings").style.display = "none";
+        document.getElementById("panel-applications").style.display = "block";
+        document.getElementById("tab-applications").classList.add("active");
+        document.getElementById("tab-listings").classList.remove("active");
+    });
+
+    window.toggleEmailField = () => {
+        document.getElementById("employer-email-field").style.display =
+            document.getElementById("f-accepts-resume").checked ? "flex" : "none";
+    };
+
+    document.getElementById("clear-btn").addEventListener("click", clearForm);
+    function clearForm() {
+        ["f-title","f-employer","f-pay","f-city","f-location","f-description","f-requirements","f-hotlink","f-employer-email"].forEach(id => document.getElementById(id).value = "");
+        document.getElementById("f-job-type").value = "";
+        document.getElementById("f-schedule").value = "";
+        document.getElementById("f-accepts-resume").checked = false;
+        document.getElementById("f-active").checked = true;
+        document.getElementById("employer-email-field").style.display = "none";
+        document.getElementById("editing-id").value = "";
+        document.getElementById("form-title").innerText = "Post New Listing";
+        document.getElementById("post-btn").innerText = "Post Listing";
+        document.getElementById("form-status").innerText = "";
+    }
+
+    document.getElementById("post-btn").addEventListener("click", async () => {
+        const btn = document.getElementById("post-btn");
+        const statusEl = document.getElementById("form-status");
+        const title = document.getElementById("f-title").value.trim();
+        const employer = document.getElementById("f-employer").value.trim();
+        const city = document.getElementById("f-city").value.trim().toLowerCase();
+        if (!title || !employer || !city) { statusEl.style.color = "red"; statusEl.innerText = "Title, employer, and city are required."; return; }
+        btn.disabled = true; statusEl.style.color = "#555"; statusEl.innerText = "Saving...";
+        const data = {
+            title, employer, city,
+            jobType: document.getElementById("f-job-type").value,
+            schedule: document.getElementById("f-schedule").value,
+            pay: document.getElementById("f-pay").value.trim(),
+            location: document.getElementById("f-location").value.trim(),
+            description: document.getElementById("f-description").value.trim(),
+            requirements: document.getElementById("f-requirements").value.trim(),
+            hotlink: document.getElementById("f-hotlink").value.trim(),
+            acceptsResume: document.getElementById("f-accepts-resume").checked,
+            employerEmail: document.getElementById("f-employer-email").value.trim(),
+            active: document.getElementById("f-active").checked,
+        };
+        const editingId = document.getElementById("editing-id").value;
+        try {
+            if (editingId) {
+                await updateDoc(doc(db, "job_listings", editingId), { ...data, updatedAt: new Date().toISOString() });
+                statusEl.style.color = "var(--green)"; statusEl.innerText = "Listing updated!";
+            } else {
+                await addDoc(collection(db, "job_listings"), { ...data, postedAt: new Date().toISOString() });
+                statusEl.style.color = "var(--green)"; statusEl.innerText = "Listing posted!";
+            }
+            clearForm(); loadListings();
+        } catch (err) { statusEl.style.color = "red"; statusEl.innerText = "Error: " + err.message; }
+        finally { btn.disabled = false; }
+    });
+
+    async function loadListings() {
+        const container = document.getElementById("listings-container");
+        try {
+            const snap = await getDocs(collection(db, "job_listings"));
+            document.getElementById("listing-count").innerText = snap.size;
+            if (snap.empty) { container.innerHTML = '<p class="empty">No listings yet.</p>'; return; }
+            container.innerHTML = "";
+            snap.forEach(d => {
+                const j = d.data();
+                const badge = j.active ? `<span class="badge-active">Active</span>` : `<span class="badge-hidden">Hidden</span>`;
+                const card = document.createElement("div");
+                card.className = "listing-card";
+                card.innerHTML = `
+                    <div class="listing-info">
+                        <h4>${escapeHtml(j.title)}${badge}</h4>
+                        <p>${escapeHtml(j.employer)} &middot; ${escapeHtml((j.city || "").toUpperCase())}${j.schedule ? " &middot; " + escapeHtml(j.schedule) : ""}${j.pay ? " &middot; " + escapeHtml(j.pay) : ""}</p>
+                        <p style="margin-top:4px;">${j.acceptsResume ? "Accepts resumes via PreDentTX" : "Hotlink only"}${j.hotlink ? ' &middot; <a href="' + escapeHtml(j.hotlink) + '" target="_blank" rel="noopener">View original</a>' : ""}</p>
+                    </div>
+                    <div class="listing-actions">
+                        <button class="btn-toggle" onclick="toggleActive('${d.id}', ${j.active})">${j.active ? "Hide" : "Show"}</button>
+                        <button class="btn-edit" onclick="editListing('${d.id}')">Edit</button>
+                        <button class="btn-delete" onclick="deleteListing('${d.id}')">Delete</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        } catch (err) { container.innerHTML = `<p class="empty" style="color:red;">Error: ${err.message}</p>`; }
+    }
+
+    window.editListing = async (id) => {
+        const snap = await getDocs(collection(db, "job_listings"));
+        const d = snap.docs.find(x => x.id === id);
+        if (!d) return;
+        const j = d.data();
+        document.getElementById("f-title").value = j.title || "";
+        document.getElementById("f-employer").value = j.employer || "";
+        document.getElementById("f-job-type").value = j.jobType || "";
+        document.getElementById("f-schedule").value = j.schedule || "";
+        document.getElementById("f-pay").value = j.pay || "";
+        document.getElementById("f-city").value = j.city || "";
+        document.getElementById("f-location").value = j.location || "";
+        document.getElementById("f-description").value = j.description || "";
+        document.getElementById("f-requirements").value = j.requirements || "";
+        document.getElementById("f-hotlink").value = j.hotlink || "";
+        document.getElementById("f-accepts-resume").checked = j.acceptsResume || false;
+        document.getElementById("f-employer-email").value = j.employerEmail || "";
+        document.getElementById("f-active").checked = j.active !== false;
+        document.getElementById("employer-email-field").style.display = j.acceptsResume ? "flex" : "none";
+        document.getElementById("editing-id").value = id;
+        document.getElementById("form-title").innerText = "Edit Listing";
+        document.getElementById("post-btn").innerText = "Update Listing";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    window.toggleActive = async (id, current) => {
+        try { await updateDoc(doc(db, "job_listings", id), { active: !current }); loadListings(); }
+        catch (err) { alert("Error: " + err.message); }
+    };
+
+    window.deleteListing = async (id) => {
+        if (!confirm("Delete this listing permanently?")) return;
+        try { await deleteDoc(doc(db, "job_listings", id)); loadListings(); }
+        catch (err) { alert("Error: " + err.message); }
+    };
+
+    async function loadApplications() {
+        const container = document.getElementById("applications-container");
+        try {
+            const snap = await getDocs(collection(db, "applications"));
+            document.getElementById("app-count").innerText = snap.size;
+            if (snap.empty) { container.innerHTML = '<p class="empty">No applications yet.</p>'; return; }
+            container.innerHTML = "";
+            const apps = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                .sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""));
+            apps.forEach(app => {
+                const date = app.timestamp ? new Date(app.timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
+                const card = document.createElement("div");
+                card.className = "app-card";
+                card.innerHTML = `
+                    <h4>${escapeHtml(app.studentName) || escapeHtml(app.studentEmail)}</h4>
+                    <p>Applied for: <strong>${escapeHtml(app.jobTitle)}</strong> at ${escapeHtml(app.employer)}</p>
+                    <p>Email: <a href="mailto:${escapeHtml(app.studentEmail)}">${escapeHtml(app.studentEmail)}</a></p>
+                    ${app.message ? `<p>Message: "${escapeHtml(app.message)}"</p>` : ""}
+                    ${app.resumeUrl ? `<p><a href="${escapeHtml(app.resumeUrl)}" target="_blank" rel="noopener" style="color:var(--green); font-weight:700;">View Resume</a></p>` : ""}
+                    <p class="app-meta">${date}</p>
+                `;
+                container.appendChild(card);
+            });
+        } catch (err) { container.innerHTML = `<p class="empty" style="color:red;">Error: ${err.message}</p>`; }
+    }
+
+    document.getElementById("logout-btn").addEventListener("click", () => { signOut(auth).then(() => window.location.href = "index.html"); });
+</script>
+</body>
+</html>

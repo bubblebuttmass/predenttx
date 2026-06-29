@@ -3,113 +3,35 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(uid) {
-      return isSignedIn() && request.auth.uid == uid;
-    }
-
-    function myRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.uid == "dIuXc604onXcz7OEEFdmNu8EGhJ3" ||
+        request.auth.uid == "9VVH0EkxXpNO8dJKyP3C4dKmkbt1"
+      );
     }
 
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if false;
+      allow write: if request.auth.uid == userId || isAdmin();
     }
 
-    match /dentist_profiles/{dentistId} {
+    match /job_listings/{listingId} {
       allow read: if true;
-      allow create: if isOwner(dentistId) && myRole() == 'dentist';
-      allow update: if isOwner(dentistId);
-      allow delete: if false;
+      allow create, update, delete: if isAdmin();
     }
 
-    match /shadowing_requests/{requestId} {
-      allow read: if isSignedIn() &&
-        (resource.data.studentId == request.auth.uid || resource.data.dentistId == request.auth.uid);
+    match /applications/{appId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() && resource.data.studentId == request.auth.uid);
       allow create: if isSignedIn() &&
-        request.resource.data.studentId == request.auth.uid &&
-        request.resource.data.requestStatus == 'pending';
-      allow update: if isSignedIn() &&
-        resource.data.dentistId == request.auth.uid &&
-        request.resource.data.studentId == resource.data.studentId &&
-        request.resource.data.dentistId == resource.data.dentistId &&
-        request.resource.data.requestStatus in ['accepted', 'declined'];
-      allow delete: if isSignedIn() && resource.data.studentId == request.auth.uid;
-    }
-
-    match /events/{eventId} {
-      allow read: if true;
-      allow create: if isSignedIn() && request.resource.data.hostId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.hostId == request.auth.uid;
-    }
-
-    match /jobs/{jobId} {
-      allow read: if true;
-      allow create: if isSignedIn() && request.resource.data.hostId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.hostId == request.auth.uid;
-    }
-
-    match /event_applications/{appId} {
-      allow read: if isSignedIn() &&
-        (resource.data.studentId == request.auth.uid || resource.data.hostId == request.auth.uid);
-      allow create: if isSignedIn() &&
-        request.resource.data.studentId == request.auth.uid &&
-        request.resource.data.status == 'pending';
-      allow update: if isSignedIn() &&
-        resource.data.hostId == request.auth.uid &&
-        request.resource.data.studentId == resource.data.studentId &&
-        request.resource.data.hostId == resource.data.hostId &&
-        request.resource.data.status in ['accepted', 'declined'];
-      allow delete: if isSignedIn() && resource.data.studentId == request.auth.uid;
-    }
-
-    match /job_applications/{appId} {
-      allow read: if isSignedIn() &&
-        (resource.data.studentId == request.auth.uid || resource.data.hostId == request.auth.uid);
-      allow create: if isSignedIn() &&
-        request.resource.data.studentId == request.auth.uid &&
-        request.resource.data.status == 'pending';
-      allow update: if isSignedIn() &&
-        resource.data.hostId == request.auth.uid &&
-        request.resource.data.studentId == resource.data.studentId &&
-        request.resource.data.hostId == resource.data.hostId &&
-        request.resource.data.status in ['accepted', 'declined'];
-      allow delete: if isSignedIn() && resource.data.studentId == request.auth.uid;
-    }
-
-    match /shadowing_logs/{logId} {
-      allow read: if isSignedIn() &&
-        (resource.data.studentId == request.auth.uid || resource.data.dentistId == request.auth.uid);
-      allow create: if isSignedIn() &&
-        request.resource.data.studentId == request.auth.uid &&
-        request.resource.data.status == 'pending' &&
-        request.resource.data.category in ['shadowing', 'volunteering', 'paid'];
-      allow update: if isSignedIn() &&
-        resource.data.dentistId == request.auth.uid &&
-        request.resource.data.studentId == resource.data.studentId &&
-        request.resource.data.dentistId == resource.data.dentistId &&
-        request.resource.data.status in ['approved', 'denied'];
-      allow delete: if false;
-    }
-
-    match /reviews/{reviewId} {
-      allow read: if true;
-      allow create: if isSignedIn() &&
-        request.resource.data.studentId == request.auth.uid &&
-        request.resource.data.rating >= 1 &&
-        request.resource.data.rating <= 5;
-      allow update, delete: if false;
+        request.resource.data.studentId == request.auth.uid;
+      allow update, delete: if isAdmin();
     }
 
     match /reports/{reportId} {
       allow create: if isSignedIn();
-      allow read, update, delete: if false;
+      allow read, update, delete: if isAdmin();
     }
 
   }

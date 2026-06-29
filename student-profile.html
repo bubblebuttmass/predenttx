@@ -3,595 +3,220 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PreDentTX | Student Profile</title>
+    <title>PreDentTX | My Profile</title>
     <style>
-        :root {
-            --primary-green: #0A5C36;
-            --primary-gold: #D4AF37;
-            --off-white: #F8F9FA;
-            --dark-text: #333333;
-            --card-bg: #FFFFFF;
-            --pending-yellow: #f39c12;
-            --approve-green: #2ecc71;
-            --deny-red: #e74c3c;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0; padding: 0;
-            background-color: var(--off-white);
-            color: var(--dark-text);
-        }
-
-        header {
-            background-color: var(--primary-green);
-            padding: 20px 50px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo { color: var(--primary-gold); font-size: 28px; font-weight: bold; text-decoration: none; }
-        .nav-links { display: flex; align-items: center; gap: 25px; }
-        .nav-links a { color: white; text-decoration: none; font-weight: bold; cursor: pointer; }
-
-        .notification-wrapper { position: relative; display: inline-block; }
-        .notification-bell { background: none; border: none; color: white; font-size: 22px; cursor: pointer; position: relative; padding: 5px; display: flex; align-items: center; justify-content: center; }
-        .notification-badge { position: absolute; top: 0; right: 0; background-color: var(--deny-red); color: white; font-size: 11px; font-weight: bold; border-radius: 50%; padding: 2px 6px; display: none; }
-        .notification-dropdown { position: absolute; top: 40px; right: 0; background-color: white; border: 1px solid #ddd; width: 300px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; z-index: 2000; padding: 15px; }
-        .notification-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 10px; }
-        .notification-header span { font-weight: bold; color: var(--dark-text); }
-        .btn-clear-feed { background-color: #7f8c8d; color: white; border: none; padding: 4px 8px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn-clear-feed:hover { background-color: #626d6e; }
-        .notification-list { max-height: 240px; overflow-y: auto; }
-        .notification-item { padding: 8px 10px; border-bottom: 1px solid #f5f5f5; font-size: 13px; color: #555; line-height: 1.4; }
-
-        .dashboard-container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
-        .welcome-banner { margin-bottom: 30px; display: flex; align-items: center; gap: 20px; }
-        .student-avatar-large { width: 85px; height: 85px; border-radius: 50%; border: 3px solid var(--primary-gold); background-color: #eee; background-size: cover; background-position: center; }
-        .welcome-banner h1 { color: var(--primary-green); margin: 0 0 5px 0; }
-
-        .card-section { background-color: var(--card-bg); padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 30px; border-top: 5px solid var(--primary-gold); }
-        .card-section h2 { margin-top: 0; color: var(--dark-text); border-bottom: 2px solid var(--off-white); padding-bottom: 10px; }
-
-        input, textarea, select { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
-
-        .profile-setup-row { display: flex; gap: 15px; }
-        @media (max-width: 600px) { .profile-setup-row { flex-direction: column; gap: 0; } }
-
-        .avatar-picker-zone { width: 80px; height: 80px; border-radius: 50%; border: 2px dashed var(--primary-green); background: #fafafa; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; text-align: center; font-size: 10px; color: #666; padding: 5px; box-sizing: border-box; flex-shrink: 0; margin-bottom: 15px; }
-        .avatar-picker-zone img { width: 100%; height: 100%; object-fit: cover; display: none; }
-        .avatar-picker-zone.dragover { background: #eaf2ee; }
-
-        button { padding: 12px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.2s; color: white; background-color: var(--primary-green); }
-        button:hover { background-color: #074226; }
-        button:disabled { background-color: #aaa; cursor: not-allowed; }
-
-        .status-card { border: 1px solid #eee; border-radius: 8px; padding: 20px; margin-bottom: 15px; background-color: #fafafa; display: flex; flex-direction: column; gap: 10px; }
-        .status-row { display: flex; justify-content: space-between; align-items: center; }
-        .status-row h3 { margin: 0; color: var(--dark-text); font-size: 18px; }
-
-        .badge { padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; text-transform: uppercase; }
-        .badge.pending { background-color: #fef9e7; color: var(--pending-yellow); border: 1px solid var(--pending-yellow); }
-        .badge.accepted { background-color: #eaf2ee; color: var(--primary-green); border: 1px solid var(--primary-green); }
-        .badge.declined { background-color: #fceae9; color: var(--deny-red); border: 1px solid var(--deny-red); }
-        .badge.approved { background-color: #eaf2ee; color: var(--primary-green); border: 1px solid var(--primary-green); }
-        .badge.denied { background-color: #fceae9; color: var(--deny-red); border: 1px solid var(--deny-red); }
-        .badge.shadowing { background-color: #eaf2ee; color: var(--primary-green); border: 1px solid var(--primary-green); }
-        .badge.volunteering { background-color: #eef2fb; color: #2980b9; border: 1px solid #2980b9; }
-        .badge.paid { background-color: #f1ece1; color: var(--primary-gold); border: 1px solid var(--primary-gold); }
-
-        .dentist-message-box { background-color: #fff; border-left: 4px solid var(--primary-gold); padding: 15px; border-radius: 4px; font-size: 14px; margin-top: 5px; }
-        .dentist-message-box strong { color: var(--primary-green); display: block; margin-bottom: 4px; }
-        .empty-message { color: #666; font-style: italic; }
-        .log-hours-row { display: flex; gap: 15px; align-items: flex-start; }
-        @media (max-width: 600px) { .log-hours-row { flex-direction: column; } }
-        .log-hours-row > * { flex: 1; }
-        .hours-summary-row { display: flex; gap: 15px; margin-bottom: 20px; }
-        @media (max-width: 600px) { .hours-summary-row { flex-direction: column; } }
-        .app-tabs { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 2px solid var(--off-white); }
-        .app-tab-btn { background: none; border: none; padding: 10px 12px; font-weight: bold; color: #888; cursor: pointer; border-bottom: 3px solid transparent; font-size: 15px; font-family: inherit; margin-bottom: -2px; }
-        .app-tab-btn.active { color: var(--primary-green); border-bottom-color: var(--primary-gold); }
-        .app-tab-btn:hover { color: var(--primary-green); }
-        .btn-remove { background-color: transparent; color: #999; border: 1px solid #ccc; padding: 4px 10px; font-size: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-remove:hover { background-color: #fceae9; color: var(--deny-red); border-color: var(--deny-red); }
-        .hours-summary-box { flex: 1; background: #f5f5f5; border-radius: 8px; padding: 15px; text-align: center; }
-        .hours-summary-num { display: block; font-size: 28px; font-weight: bold; color: var(--primary-green); }
-        .hours-summary-label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+        :root { --green: #0A5C36; --gold: #D4AF37; --off-white: #F8F9FA; --dark: #333; --red: #e74c3c; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--off-white); color: var(--dark); display: flex; flex-direction: column; min-height: 100vh; }
+        header { background: var(--green); padding: 18px 40px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { color: var(--gold); font-size: 26px; font-weight: 700; text-decoration: none; }
+        .nav-links { display: flex; gap: 20px; align-items: center; }
+        .nav-links a { color: white; text-decoration: none; font-weight: 600; cursor: pointer; font-size: 15px; }
+        .container { max-width: 860px; margin: 36px auto; padding: 0 20px 60px; flex: 1; }
+        .welcome { display: flex; align-items: center; gap: 18px; margin-bottom: 28px; }
+        .avatar-large { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--gold); background: #eee; background-size: cover; background-position: center; }
+        .card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 28px; margin-bottom: 24px; border-top: 5px solid var(--gold); }
+        .card h2 { margin: 0 0 18px; color: var(--dark); border-bottom: 2px solid var(--off-white); padding-bottom: 10px; }
+        input, textarea { width: 100%; padding: 10px; margin-bottom: 13px; border: 1px solid #ccc; border-radius: 6px; font-family: inherit; font-size: 15px; box-sizing: border-box; }
+        .row2 { display: flex; gap: 12px; }
+        .row2 input { flex: 1; }
+        @media (max-width: 600px) { .row2 { flex-direction: column; gap: 0; } }
+        button { padding: 11px 20px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; color: white; background: var(--green); font-size: 15px; }
+        button:hover { background: #074226; }
+        button:disabled { background: #aaa; cursor: not-allowed; }
+        .avatar-zone { width: 76px; height: 76px; border-radius: 50%; border: 2px dashed var(--green); background: #fafafa; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; font-size: 10px; color: #888; text-align: center; flex-shrink: 0; margin-bottom: 14px; }
+        .avatar-zone img { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .strength-box { background: #f5f5f5; border-radius: 8px; padding: 14px 16px; margin-top: 14px; }
+        .strength-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .strength-top span { font-size: 13px; font-weight: 700; color: #555; }
+        .strength-bar-track { background: #ddd; border-radius: 10px; height: 10px; overflow: hidden; }
+        .strength-bar-fill { height: 100%; border-radius: 10px; transition: width 0.4s, background 0.4s; }
+        .strength-tips { font-size: 12px; color: #888; margin: 8px 0 0; }
+        .app-card { border: 1px solid #eee; border-radius: 8px; padding: 16px 18px; margin-bottom: 12px; background: #fafafa; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .app-card-info h4 { margin: 0 0 3px; font-size: 16px; }
+        .app-card-info p { margin: 0; font-size: 13px; color: #777; }
+        .badge-submitted { background: #eaf2ee; color: var(--green); border: 1px solid var(--green); padding: 4px 10px; border-radius: 16px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+        .empty { color: #aaa; font-style: italic; }
+        footer { background: var(--green); color: white; text-align: center; padding: 18px; font-size: 13px; margin-top: auto; }
+        footer a { color: var(--gold); text-decoration: none; margin: 0 10px; }
     </style>
 </head>
 <body>
-
-    <header>
-        <a href="index.html" class="logo">PreDentTX</a>
-        <div class="nav-links">
-            <div class="notification-wrapper">
-                <button class="notification-bell" id="bell-btn">&#128276;<span class="notification-badge" id="bell-badge">0</span></button>
-                <div class="notification-dropdown" id="bell-dropdown">
-                    <div class="notification-header">
-                        <span>Updates Feed</span>
-                        <button class="btn-clear-feed" id="clear-feed-btn">Clear Feed</button>
-                    </div>
-                    <div class="notification-list" id="notification-list-container">
-                        <p style="text-align: center; color: #999; font-style: italic; margin-top: 15px;">Your feed is clear.</p>
-                    </div>
-                </div>
-            </div>
-            <a href="index.html">Find Clinics</a>
-            <a id="logout-btn">Logout</a>
-        </div>
-    </header>
-
-    <div class="dashboard-container">
-        <div class="welcome-banner">
-            <div class="student-avatar-large" id="student-avatar"></div>
-            <div>
-                <h1 id="welcome-title">Student Dashboard</h1>
-                <p style="margin: 0; color: #666;">Track your real-time clinic requests and manage your professional bio.</p>
-            </div>
-        </div>
-
-        <div class="card-section">
-            <h2>My Applicant Profile</h2>
-            <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 10px;">
-                <div class="avatar-picker-zone" id="avatar-zone">
-                    <span id="avatar-prompt">Click or drag image</span>
-                    <input type="file" id="avatar-input" accept="image/*" style="display: none;">
-                    <img id="avatar-preview" src="" alt="Avatar Preview">
-                </div>
-                <div style="flex-grow: 1;">
-                    <div class="profile-setup-row">
-                        <input type="text" id="student-first-name" placeholder="First Name" oninput="updateProfileStrength()">
-                        <input type="text" id="student-last-name" placeholder="Last Name" oninput="updateProfileStrength()">
-                    </div>
-                    <input type="text" id="student-school" placeholder="Undergraduate University (e.g., UT Austin, Texas A&M)" oninput="updateProfileStrength()">
-                </div>
-            </div>
-            <input type="text" id="student-preferred-city" placeholder="Your City in Texas (for weekly email digest — e.g., Austin, Houston, Dallas)" oninput="updateProfileStrength()">
-            <textarea id="student-bio" rows="3" placeholder="Write a short personal bio for dentists to review..." style="resize:none;" oninput="updateProfileStrength()"></textarea>
-            <button id="save-profile-btn">Save Profile Information</button>
-            <p id="save-status" style="color: var(--primary-green); font-weight: bold; margin-top: 10px; margin-bottom: 0;"></p>
-
-            <div style="margin-top: 18px; background: #f5f5f5; border-radius: 8px; padding: 14px 16px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
-                    <span style="font-size: 13px; font-weight: bold; color: #555;">Profile Strength</span>
-                    <span id="strength-label" style="font-size: 13px; font-weight: bold; color: #e74c3c;">0%</span>
-                </div>
-                <div style="background:#ddd; border-radius:10px; height:10px; overflow:hidden;">
-                    <div id="strength-bar" style="height:100%; width:0%; background:#e74c3c; border-radius:10px; transition:width 0.4s ease;"></div>
-                </div>
-                <p id="strength-tips" style="font-size:12px; color:#888; margin: 8px 0 0 0;">To improve: Add your first name · Add your last name · Add your university · Add your city · Write a short bio · Upload a profile photo</p>
-            </div>
-        </div>
-
-        <div class="card-section">
-            <h2>My Applications</h2>
-            <div class="app-tabs">
-                <button class="app-tab-btn active" id="tab-shadowing">Shadowing</button>
-                <button class="app-tab-btn" id="tab-events">Event RSVPs</button>
-                <button class="app-tab-btn" id="tab-jobs">Job Applications</button>
-            </div>
-            <div id="applications-container"><p class="empty-message">Loading submitted requests...</p></div>
-            <div id="event-rsvps-container" style="display:none;"><p class="empty-message">Loading RSVPs...</p></div>
-            <div id="job-applications-container" style="display:none;"><p class="empty-message">Loading applications...</p></div>
-        </div>
-
-        <div class="card-section">
-            <h2>Log Hours</h2>
-            <p style="font-size: 14px; color: #666; margin-top: 0;">Track shadowing, volunteering, and paid hours at clinics you have connected with. Once a dentist approves a log, it counts toward your totals below.</p>
-
-            <div class="hours-summary-row">
-                <div class="hours-summary-box">
-                    <span class="hours-summary-num" id="total-shadowing">0</span>
-                    <span class="hours-summary-label">Shadowing hrs</span>
-                </div>
-                <div class="hours-summary-box">
-                    <span class="hours-summary-num" id="total-volunteering">0</span>
-                    <span class="hours-summary-label">Volunteering hrs</span>
-                </div>
-                <div class="hours-summary-box">
-                    <span class="hours-summary-num" id="total-paid">0</span>
-                    <span class="hours-summary-label">Paid hrs</span>
-                </div>
-            </div>
-
-            <div class="log-hours-row">
-                <select id="log-request-select"><option value="">Select a clinic...</option></select>
-                <select id="log-category-select">
-                    <option value="shadowing">Shadowing</option>
-                    <option value="volunteering">Volunteering</option>
-                    <option value="paid">Paid</option>
-                </select>
-                <input type="date" id="log-date">
-                <input type="number" id="log-hours" placeholder="Hours" min="0.5" step="0.5">
-            </div>
-            <button id="submit-log-btn">Submit Hours for Verification</button>
-            <p id="log-status" style="color: var(--primary-green); font-weight: bold; margin-top: 10px;"></p>
-            <div id="logs-container" style="margin-top: 20px;"></div>
+<header>
+    <a href="index.html" class="logo">PreDentTX</a>
+    <div class="nav-links">
+        <a href="index.html">Browse Jobs</a>
+        <a id="logout-btn">Logout</a>
+    </div>
+</header>
+<div class="container">
+    <div class="welcome">
+        <div class="avatar-large" id="avatar-large"></div>
+        <div>
+            <h1 id="welcome-title" style="margin:0 0 4px; color:var(--green); font-size:26px;">My Profile</h1>
+            <p style="margin:0; color:#888; font-size:14px;">Manage your profile and track your applications.</p>
         </div>
     </div>
+    <div class="card">
+        <h2>My Profile</h2>
+        <div style="display:flex; gap:16px; align-items:flex-start; margin-bottom:8px;">
+            <div class="avatar-zone" id="avatar-zone">
+                <span id="avatar-prompt">Click to add photo</span>
+                <input type="file" id="avatar-input" accept="image/*" style="display:none;">
+                <img id="avatar-img" src="" alt="">
+            </div>
+            <div style="flex:1;">
+                <div class="row2">
+                    <input type="text" id="first-name" placeholder="First Name" oninput="updateStrength()">
+                    <input type="text" id="last-name" placeholder="Last Name" oninput="updateStrength()">
+                </div>
+                <input type="text" id="school" placeholder="Undergraduate University (e.g., UT Austin)" oninput="updateStrength()">
+            </div>
+        </div>
+        <input type="text" id="preferred-city" placeholder="Your city in Texas (for weekly job digest — e.g., Austin)" oninput="updateStrength()">
+        <textarea id="bio" rows="3" placeholder="Short bio for employers..." style="resize:none;" oninput="updateStrength()"></textarea>
+        <button id="save-btn">Save Profile</button>
+        <p id="save-status" style="color:var(--green); font-weight:700; margin:10px 0 0;"></p>
+        <div class="strength-box">
+            <div class="strength-top">
+                <span>Profile Strength</span>
+                <span id="strength-pct" style="color:var(--red);">0%</span>
+            </div>
+            <div class="strength-bar-track">
+                <div class="strength-bar-fill" id="strength-bar" style="width:0%; background:var(--red);"></div>
+            </div>
+            <p class="strength-tips" id="strength-tips"></p>
+        </div>
+    </div>
+    <div class="card">
+        <h2>My Applications</h2>
+        <div id="apps-list"><p class="empty">Loading your applications...</p></div>
+    </div>
+</div>
+<footer>
+    <p style="margin:0 0 8px;">&copy; 2026 PreDentTX. All rights reserved.</p>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="privacy.html#terms">Terms of Service</a>
+</footer>
+<script type="module">
+    import { auth, db, uploadMedia, escapeHtml } from './firebase-config.js';
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+    import { doc, getDoc, setDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
-    <script type="module">
-        import { auth, db, uploadMedia, escapeHtml, notify } from './firebase-config.js';
-        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
-        import { collection, getDocs, addDoc, doc, getDoc, setDoc, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+    let currentUid = "";
+    let currentEmail = "";
+    let picUrl = "";
 
-        const applicationsContainer = document.getElementById("applications-container");
-        const studentAvatar = document.getElementById("student-avatar");
-        const welcomeTitle = document.getElementById("welcome-title");
-        const avatarZone = document.getElementById("avatar-zone");
-        const avatarInput = document.getElementById("avatar-input");
-        const avatarPreview = document.getElementById("avatar-preview");
-        const avatarPrompt = document.getElementById("avatar-prompt");
-        const bellBtn = document.getElementById("bell-btn");
-        const bellDropdown = document.getElementById("bell-dropdown");
-        const bellBadge = document.getElementById("bell-badge");
-        const clearFeedBtn = document.getElementById("clear-feed-btn");
-        const notificationListContainer = document.getElementById("notification-list-container");
-        const logRequestSelect = document.getElementById("log-request-select");
-        const logsContainer = document.getElementById("logs-container");
-
-        let currentUid = "";
-        let currentStudentEmail = "";
-        let unreadNotificationCount = 0;
-        let profilePicString = "";
-        let acceptedRequestsCache = [];
-
-        window.updateProfileStrength = function() {
-            const firstName = (document.getElementById("student-first-name").value || "").trim();
-            const lastName = (document.getElementById("student-last-name").value || "").trim();
-            const school = (document.getElementById("student-school").value || "").trim();
-            const city = (document.getElementById("student-preferred-city").value || "").trim();
-            const bio = (document.getElementById("student-bio").value || "").trim();
-
-            const checks = [
-                { done: firstName.length > 0, tip: "Add your first name" },
-                { done: lastName.length > 0, tip: "Add your last name" },
-                { done: school.length > 0, tip: "Add your university" },
-                { done: city.length > 0, tip: "Add your city" },
-                { done: bio.length > 0, tip: "Write a short bio" },
-                { done: !!profilePicString, tip: "Upload a profile photo" },
-            ];
-
-            const done = checks.filter(c => c.done).length;
-            const pct = Math.round((done / checks.length) * 100);
-            const missing = checks.filter(c => !c.done).map(c => c.tip);
-            const color = pct < 40 ? "#e74c3c" : pct < 80 ? "#f39c12" : "#0A5C36";
-
-            document.getElementById("strength-bar").style.width = pct + "%";
-            document.getElementById("strength-bar").style.background = color;
-            document.getElementById("strength-label").innerText = pct + "%";
-            document.getElementById("strength-label").style.color = color;
-            document.getElementById("strength-tips").innerText = missing.length > 0
-                ? "To improve: " + missing.join(" · ")
-                : "Great profile! You are all set.";
-        };
-
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) { window.location.href = "login.html"; return; }
-            if (!user.emailVerified) {
-                alert("Please verify your email before accessing your dashboard. Check your inbox, or sign up again to resend.");
-                window.location.href = "login.html";
-                return;
-            }
-
-            currentUid = user.uid;
-            currentStudentEmail = user.email;
-
-            const userDoc = await getDoc(doc(db, "users", user.uid));
-            if (userDoc.exists()) {
-                const data = userDoc.data();
-                document.getElementById("student-first-name").value = data.firstName || "";
-                document.getElementById("student-last-name").value = data.lastName || "";
-                document.getElementById("student-school").value = data.school || "";
-                document.getElementById("student-preferred-city").value = data.preferredCity || "";
-                document.getElementById("student-bio").value = data.bio || "";
-
-                if (data.firstName) {
-                    welcomeTitle.innerText = `Welcome, ${data.firstName}`;
-                } else {
-                    welcomeTitle.innerText = `Welcome, ${user.email.split('@')[0]}`;
-                }
-
-                if (data.profilePic) {
-                    profilePicString = data.profilePic;
-                    studentAvatar.style.backgroundImage = `url('${profilePicString}')`;
-                    avatarPreview.src = profilePicString;
-                    avatarPreview.style.display = "block";
-                    avatarPrompt.style.display = "none";
-                } else {
-                    studentAvatar.style.backgroundImage = `url('https://api.dicebear.com/7.x/fun-emoji/svg?seed=${user.uid}')`;
-                }
-            }
-            window.updateProfileStrength();
-            loadStudentApplications(user.uid);
-            loadStudentLogs(user.uid);
-            loadEventRsvps(user.uid);
-            loadJobApplications(user.uid);
-        });
-
-        avatarZone.addEventListener("click", () => avatarInput.click());
-        avatarZone.addEventListener("dragover", (e) => { e.preventDefault(); avatarZone.classList.add("dragover"); });
-        avatarZone.addEventListener("dragleave", () => avatarZone.classList.remove("dragover"));
-        avatarZone.addEventListener("drop", (e) => { e.preventDefault(); avatarZone.classList.remove("dragover"); if (e.dataTransfer.files.length > 0) handleAvatarUpload(e.dataTransfer.files[0]); });
-        avatarInput.addEventListener("change", (e) => { if (e.target.files.length > 0) handleAvatarUpload(e.target.files[0]); });
-
-        async function handleAvatarUpload(file) {
-            if (!file.type.startsWith("image/")) return;
-            if (file.size > 5 * 1024 * 1024) { alert("Image must be under 5MB."); return; }
-            avatarPreview.src = URL.createObjectURL(file);
-            avatarPreview.style.display = "block";
-            avatarPrompt.style.display = "none";
-            try {
-                profilePicString = await uploadMedia(currentUid, "avatar", file);
-                window.updateProfileStrength();
-            } catch (err) { alert("Upload failed: " + err.message); }
-        }
-
-        document.getElementById("save-profile-btn").addEventListener("click", async () => {
-            const status = document.getElementById("save-status");
-            const saveBtn = document.getElementById("save-profile-btn");
-            saveBtn.disabled = true;
-            status.innerText = "Saving profile...";
-
-            const payload = {
-                firstName: document.getElementById("student-first-name").value.trim(),
-                lastName: document.getElementById("student-last-name").value.trim(),
-                school: document.getElementById("student-school").value.trim(),
-                preferredCity: document.getElementById("student-preferred-city").value.trim().toLowerCase(),
-                bio: document.getElementById("student-bio").value.trim(),
-                profilePic: profilePicString,
-                role: "student",
-                email: currentStudentEmail
-            };
-
-            try {
-                await setDoc(doc(db, "users", currentUid), payload, { merge: true });
-                status.innerText = "Success! Profile details updated live on PreDentTX.";
-                if (profilePicString) studentAvatar.style.backgroundImage = `url('${profilePicString}')`;
-                if (payload.firstName) welcomeTitle.innerText = `Welcome, ${payload.firstName}`;
-                window.updateProfileStrength();
-            } catch (err) {
-                status.innerText = "Error saving profile: " + err.message;
-            } finally {
-                saveBtn.disabled = false;
-            }
-        });
-
-        bellBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            bellDropdown.style.display = bellDropdown.style.display === "block" ? "none" : "block";
-            unreadNotificationCount = 0;
-            bellBadge.style.display = "none";
-        });
-        document.addEventListener("click", () => { bellDropdown.style.display = "none"; });
-        bellDropdown.addEventListener("click", (e) => { e.stopPropagation(); });
-
-        clearFeedBtn.addEventListener("click", () => {
-            notificationListContainer.innerHTML = '<p style="text-align: center; color: #999; font-style: italic; margin-top: 15px;">Your feed is clear.</p>';
-            unreadNotificationCount = 0;
-            bellBadge.style.display = "none";
-        });
-
-        async function loadStudentApplications(uid) {
-            applicationsContainer.innerHTML = "";
-            notificationListContainer.innerHTML = "";
-            unreadNotificationCount = 0;
-            acceptedRequestsCache = [];
-            logRequestSelect.innerHTML = '<option value="">Select an accepted clinic...</option>';
-
-            try {
-                const q = query(collection(db, "shadowing_requests"), where("studentId", "==", uid));
-                const querySnapshot = await getDocs(q);
-
-                if (querySnapshot.empty) {
-                    applicationsContainer.innerHTML = '<p class="empty-message">You have not submitted any shadowing requests yet.</p>';
-                } else {
-                    for (const documentSnapshot of querySnapshot.docs) {
-                        const request = documentSnapshot.data();
-                        const dentistDoc = await getDoc(doc(db, "dentist_profiles", request.dentistId));
-                        const clinicName = dentistDoc.exists() ? dentistDoc.data().clinicName : "Dental Clinic";
-                        const doctorName = dentistDoc.exists() ? dentistDoc.data().doctorName : "Dentist Specialist";
-
-                        const card = document.createElement("div");
-                        card.className = "status-card";
-
-                        let messageSectionHTML = "";
-                        if (request.requestStatus === "accepted") {
-                            messageSectionHTML = `<div class="dentist-message-box"><strong>Message from ${escapeHtml(doctorName)}:</strong>${escapeHtml(request.dentistMessage) || "Accepted! Welcome to our clinic."}</div>`;
-                            acceptedRequestsCache.push({ id: documentSnapshot.id, dentistId: request.dentistId, clinicName, requestedDate: request.requestedDate });
-                        }
-
-                        card.innerHTML = `
-                            <div class="status-row">
-                                <div>
-                                    <h3>${escapeHtml(clinicName)}</h3>
-                                    <span style="font-size: 14px; color: #666;">Date Requested: <strong>${escapeHtml(request.requestedDate)}</strong></span>
-                                </div>
-                                <div style="display:flex; align-items:center; gap:10px;">
-                                    <span class="badge ${request.requestStatus}">${request.requestStatus}</span>
-                                    <button class="btn-remove" onclick="removeApplication('shadowing_requests', '${documentSnapshot.id}')">Remove</button>
-                                </div>
-                            </div>
-                            ${messageSectionHTML}
-                        `;
-                        applicationsContainer.appendChild(card);
-
-                        if (request.requestStatus !== "pending") {
-                            unreadNotificationCount++;
-                            const notificationItem = document.createElement("div");
-                            notificationItem.className = "notification-item";
-                            notificationItem.innerHTML = request.requestStatus === "accepted"
-                                ? `Your request at ${escapeHtml(clinicName)} was ACCEPTED!`
-                                : `Your request at ${escapeHtml(clinicName)} was declined.`;
-                            notificationListContainer.appendChild(notificationItem);
-                        }
-                    }
-                }
-
-                if (unreadNotificationCount > 0) { bellBadge.innerText = unreadNotificationCount; bellBadge.style.display = "block"; }
-                else { bellBadge.style.display = "none"; notificationListContainer.innerHTML = '<p style="text-align: center; color: #999; font-style: italic; margin-top: 15px;">Your feed is clear.</p>'; }
-
-                const jobAppSnap = await getDocs(query(collection(db, "job_applications"), where("studentId", "==", uid), where("status", "==", "accepted")));
-                jobAppSnap.forEach((d) => {
-                    const app = d.data();
-                    acceptedRequestsCache.push({ id: d.id, dentistId: app.hostId, clinicName: app.jobTitle ? `${app.jobTitle} (Job)` : "Accepted Job", requestedDate: null });
-                });
-
-                const eventAppSnap = await getDocs(query(collection(db, "event_applications"), where("studentId", "==", uid), where("status", "==", "accepted")));
-                eventAppSnap.forEach((d) => {
-                    const app = d.data();
-                    acceptedRequestsCache.push({ id: d.id, dentistId: app.hostId, clinicName: app.eventTitle ? `${app.eventTitle} (Event)` : "Accepted Event", requestedDate: null });
-                });
-
-                acceptedRequestsCache.forEach((r) => {
-                    const opt = document.createElement("option");
-                    opt.value = r.id;
-                    opt.innerText = r.requestedDate ? `${r.clinicName} — requested ${r.requestedDate}` : r.clinicName;
-                    logRequestSelect.appendChild(opt);
-                });
-
-            } catch (error) {
-                applicationsContainer.innerHTML = `<p style="color:red;">Error loading data: ${error.message}</p>`;
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) { window.location.href = "login.html"; return; }
+        if (!user.emailVerified) { alert("Please verify your email first."); window.location.href = "login.html"; return; }
+        currentUid = user.uid;
+        currentEmail = user.email;
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (snap.exists()) {
+            const d = snap.data();
+            document.getElementById("first-name").value = d.firstName || "";
+            document.getElementById("last-name").value = d.lastName || "";
+            document.getElementById("school").value = d.school || "";
+            document.getElementById("preferred-city").value = d.preferredCity || "";
+            document.getElementById("bio").value = d.bio || "";
+            if (d.firstName) document.getElementById("welcome-title").innerText = `Welcome, ${d.firstName}`;
+            if (d.profilePic) {
+                picUrl = d.profilePic;
+                document.getElementById("avatar-large").style.backgroundImage = `url('${picUrl}')`;
+                document.getElementById("avatar-img").src = picUrl;
+                document.getElementById("avatar-img").style.display = "block";
+                document.getElementById("avatar-prompt").style.display = "none";
+            } else {
+                document.getElementById("avatar-large").style.backgroundImage = `url('https://api.dicebear.com/7.x/fun-emoji/svg?seed=${user.uid}')`;
             }
         }
+        window.updateStrength();
+        loadApplications(user.uid);
+    });
 
-        document.getElementById("submit-log-btn").addEventListener("click", async () => {
-            const status = document.getElementById("log-status");
-            const submitBtn = document.getElementById("submit-log-btn");
-            const requestId = logRequestSelect.value;
-            const category = document.getElementById("log-category-select").value;
-            const logDate = document.getElementById("log-date").value;
-            const hours = parseFloat(document.getElementById("log-hours").value);
+    const avatarZone = document.getElementById("avatar-zone");
+    const avatarInput = document.getElementById("avatar-input");
+    avatarZone.addEventListener("click", () => avatarInput.click());
+    avatarInput.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) { alert("Image must be under 5MB."); return; }
+        document.getElementById("avatar-img").src = URL.createObjectURL(file);
+        document.getElementById("avatar-img").style.display = "block";
+        document.getElementById("avatar-prompt").style.display = "none";
+        try { picUrl = await uploadMedia(currentUid, "avatar", file); window.updateStrength(); }
+        catch (err) { alert("Upload failed: " + err.message); }
+    });
 
-            if (!requestId) { status.style.color = "red"; status.innerText = "Pick which clinic this was at."; return; }
-            if (!logDate) { status.style.color = "red"; status.innerText = "Pick the date."; return; }
-            if (!hours || hours <= 0) { status.style.color = "red"; status.innerText = "Enter a valid number of hours."; return; }
+    document.getElementById("save-btn").addEventListener("click", async () => {
+        const btn = document.getElementById("save-btn");
+        const status = document.getElementById("save-status");
+        btn.disabled = true; status.innerText = "Saving...";
+        const firstName = document.getElementById("first-name").value.trim();
+        try {
+            await setDoc(doc(db, "users", currentUid), {
+                firstName, lastName: document.getElementById("last-name").value.trim(),
+                school: document.getElementById("school").value.trim(),
+                preferredCity: document.getElementById("preferred-city").value.trim().toLowerCase(),
+                bio: document.getElementById("bio").value.trim(),
+                profilePic: picUrl, email: currentEmail, role: "student"
+            }, { merge: true });
+            status.innerText = "Profile saved!";
+            if (firstName) document.getElementById("welcome-title").innerText = `Welcome, ${firstName}`;
+            if (picUrl) document.getElementById("avatar-large").style.backgroundImage = `url('${picUrl}')`;
+            window.updateStrength();
+        } catch (err) { status.innerText = "Error: " + err.message; }
+        finally { btn.disabled = false; }
+    });
 
-            const matchedRequest = acceptedRequestsCache.find(r => r.id === requestId);
-            if (!matchedRequest) { status.style.color = "red"; status.innerText = "Could not match that request, refresh and try again."; return; }
+    window.updateStrength = function() {
+        const checks = [
+            { done: document.getElementById("first-name").value.trim().length > 0, tip: "Add your first name" },
+            { done: document.getElementById("last-name").value.trim().length > 0, tip: "Add your last name" },
+            { done: document.getElementById("school").value.trim().length > 0, tip: "Add your university" },
+            { done: document.getElementById("preferred-city").value.trim().length > 0, tip: "Add your city" },
+            { done: document.getElementById("bio").value.trim().length > 0, tip: "Write a short bio" },
+            { done: !!picUrl, tip: "Add a profile photo" },
+        ];
+        const done = checks.filter(c => c.done).length;
+        const pct = Math.round((done / checks.length) * 100);
+        const color = pct < 40 ? "#e74c3c" : pct < 80 ? "#f39c12" : "#0A5C36";
+        document.getElementById("strength-bar").style.width = pct + "%";
+        document.getElementById("strength-bar").style.background = color;
+        document.getElementById("strength-pct").innerText = pct + "%";
+        document.getElementById("strength-pct").style.color = color;
+        const missing = checks.filter(c => !c.done).map(c => c.tip);
+        document.getElementById("strength-tips").innerText = missing.length ? "To improve: " + missing.join(" · ") : "Great profile! You are all set.";
+    };
 
-            submitBtn.disabled = true;
-            status.style.color = "var(--primary-green)";
-            status.innerText = "Submitting...";
+    async function loadApplications(uid) {
+        const list = document.getElementById("apps-list");
+        try {
+            const q = query(collection(db, "applications"), where("studentId", "==", uid));
+            const snap = await getDocs(q);
+            if (snap.empty) { list.innerHTML = '<p class="empty">No applications yet. Browse jobs to get started!</p>'; return; }
+            list.innerHTML = "";
+            const apps = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                .sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""));
+            apps.forEach(app => {
+                const date = app.timestamp ? new Date(app.timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
+                const div = document.createElement("div");
+                div.className = "app-card";
+                div.innerHTML = `
+                    <div class="app-card-info">
+                        <h4>${escapeHtml(app.jobTitle) || "Position"}</h4>
+                        <p>${escapeHtml(app.employer) || ""}${date ? " &middot; Applied " + date : ""}</p>
+                        ${app.resumeUrl ? `<a href="${escapeHtml(app.resumeUrl)}" target="_blank" rel="noopener" style="font-size:12px; color:var(--green);">View submitted resume</a>` : ""}
+                    </div>
+                    <span class="badge-submitted">Submitted</span>
+                `;
+                list.appendChild(div);
+            });
+        } catch (err) { list.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`; }
+    }
 
-            try {
-                const newLogRef = await addDoc(collection(db, "shadowing_logs"), {
-                    studentId: currentUid,
-                    studentEmail: currentStudentEmail,
-                    dentistId: matchedRequest.dentistId,
-                    clinicName: matchedRequest.clinicName,
-                    category, hours, logDate,
-                    status: "pending",
-                    timestamp: new Date().toISOString()
-                });
-                status.innerText = "Hours submitted for verification!";
-                document.getElementById("log-date").value = "";
-                document.getElementById("log-hours").value = "";
-                loadStudentLogs(currentUid);
-                notify({ type: "hours_logged", docId: newLogRef.id });
-            } catch (err) {
-                status.style.color = "red";
-                status.innerText = "Error: " + err.message;
-            } finally {
-                submitBtn.disabled = false;
-            }
-        });
-
-        async function loadStudentLogs(uid) {
-            logsContainer.innerHTML = "";
-            const totals = { shadowing: 0, volunteering: 0, paid: 0 };
-            try {
-                const snap = await getDocs(query(collection(db, "shadowing_logs"), where("studentId", "==", uid)));
-                snap.forEach((d) => {
-                    const log = d.data();
-                    const category = log.category || "shadowing";
-                    if (log.status === "approved" && totals.hasOwnProperty(category)) totals[category] += Number(log.hours) || 0;
-                    const row = document.createElement("div");
-                    row.className = "status-row";
-                    row.style.cssText = "border-bottom:1px solid #eee; padding:10px 0;";
-                    row.innerHTML = `
-                        <span style="font-size: 14px;">
-                            <span class="badge ${category}" style="margin-right:8px; font-size:10px; padding:3px 8px;">${category}</span>
-                            ${escapeHtml(log.clinicName) || "Clinic"} — ${log.hours} hrs on ${escapeHtml(log.logDate)}
-                        </span>
-                        <span class="badge ${log.status}">${log.status}</span>
-                    `;
-                    logsContainer.appendChild(row);
-                });
-                document.getElementById("total-shadowing").innerText = totals.shadowing;
-                document.getElementById("total-volunteering").innerText = totals.volunteering;
-                document.getElementById("total-paid").innerText = totals.paid;
-            } catch (err) { console.error(err); }
-        }
-
-        const tabShadowing = document.getElementById("tab-shadowing");
-        const tabEvents = document.getElementById("tab-events");
-        const tabJobs = document.getElementById("tab-jobs");
-        const shadowingPanel = document.getElementById("applications-container");
-        const eventsPanel = document.getElementById("event-rsvps-container");
-        const jobsPanel = document.getElementById("job-applications-container");
-
-        function setActiveTab(btn, panel) {
-            [tabShadowing, tabEvents, tabJobs].forEach(b => b.classList.remove("active"));
-            [shadowingPanel, eventsPanel, jobsPanel].forEach(p => p.style.display = "none");
-            btn.classList.add("active");
-            panel.style.display = "block";
-        }
-
-        tabShadowing.addEventListener("click", () => setActiveTab(tabShadowing, shadowingPanel));
-        tabEvents.addEventListener("click", () => setActiveTab(tabEvents, eventsPanel));
-        tabJobs.addEventListener("click", () => setActiveTab(tabJobs, jobsPanel));
-
-        async function loadEventRsvps(uid) {
-            eventsPanel.innerHTML = "";
-            try {
-                const snap = await getDocs(query(collection(db, "event_applications"), where("studentId", "==", uid)));
-                if (snap.empty) { eventsPanel.innerHTML = '<p class="empty-message">No event RSVPs yet.</p>'; return; }
-                snap.forEach((d) => {
-                    const rsvp = d.data();
-                    const card = document.createElement("div");
-                    card.className = "status-card";
-                    card.innerHTML = `<div class="status-row"><h3>${escapeHtml(rsvp.eventTitle) || "Event"}</h3><div style="display:flex;align-items:center;gap:10px;"><span class="badge ${rsvp.status}">${rsvp.status}</span><button class="btn-remove" onclick="removeApplication('event_applications','${d.id}')">Remove</button></div></div>`;
-                    eventsPanel.appendChild(card);
-                });
-            } catch (err) { eventsPanel.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`; }
-        }
-
-        async function loadJobApplications(uid) {
-            jobsPanel.innerHTML = "";
-            try {
-                const snap = await getDocs(query(collection(db, "job_applications"), where("studentId", "==", uid)));
-                if (snap.empty) { jobsPanel.innerHTML = '<p class="empty-message">No job applications yet.</p>'; return; }
-                snap.forEach((d) => {
-                    const app = d.data();
-                    const card = document.createElement("div");
-                    card.className = "status-card";
-                    card.innerHTML = `<div class="status-row"><div><h3>${escapeHtml(app.jobTitle) || "Job"}</h3></div><div style="display:flex;align-items:center;gap:10px;"><span class="badge ${app.status}">${app.status}</span><button class="btn-remove" onclick="removeApplication('job_applications','${d.id}')">Remove</button></div></div>`;
-                    jobsPanel.appendChild(card);
-                });
-            } catch (err) { jobsPanel.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`; }
-        }
-
-        window.removeApplication = async (collectionName, docId) => {
-            if (!confirm("Remove this from your list? This cannot be undone.")) return;
-            try {
-                await deleteDoc(doc(db, collectionName, docId));
-                if (collectionName === "shadowing_requests") loadStudentApplications(currentUid);
-                else if (collectionName === "event_applications") loadEventRsvps(currentUid);
-                else if (collectionName === "job_applications") loadJobApplications(currentUid);
-            } catch (err) { alert("Error removing: " + err.message); }
-        };
-
-        document.getElementById("logout-btn").addEventListener("click", () => {
-            signOut(auth).then(() => { window.location.href = "index.html"; });
-        });
-    </script>
-    <footer style="background-color: #0A5C36; color: white; text-align: center; padding: 20px; font-size: 13px;">
-        <p style="margin: 0 0 8px 0;">&copy; 2026 PreDentTX. All rights reserved.</p>
-        <a href="privacy.html" style="color: #D4AF37; text-decoration: none; margin: 0 10px;">Privacy Policy</a>
-        <a href="privacy.html#terms" style="color: #D4AF37; text-decoration: none; margin: 0 10px;">Terms of Service</a>
-    </footer>
+    document.getElementById("logout-btn").addEventListener("click", () => { signOut(auth).then(() => window.location.href = "index.html"); });
+</script>
 </body>
 </html>
-
